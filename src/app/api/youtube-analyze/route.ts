@@ -191,19 +191,9 @@ export async function POST(req: NextRequest) {
       });
 
     supabase
-      .from('usage_tracking')
-      .insert({
-        user_id: user.id,
-        type: 'summary',
-      })
-      .then(({ error }) => {
-        if (error) console.error('[youtube-analyze] Track usage error:', error.message);
-      });
-
-    supabase
       .rpc('increment_usage', { p_user_id: user.id, p_type: 'summary' })
       .then(({ error }) => {
-        if (error) console.error('[youtube-analyze] Increment usage error:', error.message);
+        if (error) console.error('[youtube-analyze] Track usage error:', error.message);
       });
 
     return NextResponse.json(result);

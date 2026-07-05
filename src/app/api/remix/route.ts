@@ -433,18 +433,11 @@ Rules:
       })
     );
 
-    void supabase.from('usage_tracking').insert({
-      user_id: user.id,
-      type: 'remix',
-    }).then(({ error }) => {
-      if (error) console.error('[Remix API] Track usage error:', error.message)
-    })
-
     void supabase.rpc('increment_usage', {
       p_user_id: user.id,
       p_type: 'remix',
     }).then(({ error }) => {
-      if (error) console.error('[Remix API] Increment usage error:', error.message)
+      if (error) console.error('[Remix API] Track usage error:', error.message)
     })
 
     return NextResponse.json({ results });

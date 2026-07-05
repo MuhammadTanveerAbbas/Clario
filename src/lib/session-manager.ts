@@ -20,28 +20,29 @@ export async function getSessionUser() {
 }
 
 /**
- * Returns the authenticated user for a given token, using a short-lived
+ * Returns the authenticated user using a short-lived
  * in-memory cache to avoid redundant Supabase round-trips on hot paths.
+ * The session cache is keyed by the session cookie or user id.
  */
-export async function validateSession(token?: string) {
-  if (!token) return null
+export async function validateSession(cacheKey?: string) {
+  if (!cacheKey) return null
   
-  const cached = sessionCache.get(token)
+  const cached = sessionCache.get(cacheKey)
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
     return cached.user
   }
   
   const user = await getSessionUser()
-  if (user && token) {
-    sessionCache.set(token, { user, timestamp: Date.now() })
+  if (user && cacheKey) {
+    sessionCache.set(cacheKey, { user, timestamp: Date.now() })
   }
   
   return user
 }
 
-export function clearSessionCache(token?: string) {
-  if (token) {
-    sessionCache.delete(token)
+export function clearSessionCache(cacheKey?: string) {
+  if (cacheKey) {
+    sessionCache.delete(cacheKey)
   } else {
     sessionCache.clear()
   }

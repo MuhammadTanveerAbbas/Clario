@@ -1,18 +1,14 @@
 import { MetadataRoute } from 'next'
- 
+
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://clario-hub.vercel.app'
+
 export default function sitemap(): MetadataRoute.Sitemap {
-  return [
-    {
-      url: 'https://clario-summarizer.vercel.app',
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 1,
-    },
-    {
-      url: 'https://clario-summarizer.vercel.app/tool',
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.9,
-    },
-  ]
+  const routes = ['', '/pricing', '/privacy', '/terms', '/refund', '/sign-in', '/sign-up']
+
+  return routes.map((path) => ({
+    url: `${baseUrl}${path}`,
+    lastModified: new Date(),
+    changeFrequency: path === '' ? 'weekly' : 'monthly',
+    priority: path === '' ? 1 : 0.7,
+  }))
 }

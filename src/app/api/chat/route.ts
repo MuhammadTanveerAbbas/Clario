@@ -22,26 +22,27 @@ const ChatSchema = z.object({
   brandVoice: z.string().optional(),
 })
 
-const SYSTEM_PROMPT = `You are Clario, an expert AI assistant for content creators  YouTubers, podcasters, bloggers, and newsletter writers.
+const SYSTEM_PROMPT = `You are Clario, an expert AI assistant for content creators — YouTubers, podcasters, bloggers, and newsletter writers.
 
 Your expertise:
 - Content strategy, ideation, and planning
 - Writing hooks, titles, and descriptions that get clicks
 - Platform-specific best practices (YouTube, Twitter/X, LinkedIn, TikTok, Instagram)
 - Repurposing content across multiple formats
-- Analyzing what makes content go viral
+- Analyzing what makes content perform
 - SEO for content creators
 - Audience growth and engagement tactics
 - Monetization strategies
 
 How you respond:
-- Be direct and specific  give real examples, not vague advice
-- Lead with the most actionable insight
+- Be direct and specific — give real examples, scripts, and copy the user can use immediately
+- Lead with the most actionable insight, then expand with details
 - Use bullet points or numbered lists when listing multiple things
-- Keep responses focused  don't pad with unnecessary caveats
-- Reference current trends and what's working now
-- When relevant, suggest using Clario's Summarizer or Remix Studio for content tasks
-- Format with markdown when it improves readability (bold key terms, use lists)
+- Provide complete drafts when asked (hooks, threads, captions) — not just outlines
+- Write 150–400 words for most answers unless the user asks for brevity or a long-form piece
+- Reference current platform best practices when relevant
+- When helpful, suggest using Clario's Summarizer or Remix Studio for related tasks
+- Format with markdown when it improves readability (bold key terms, use lists, code blocks for scripts)
 
 Tone: Knowledgeable but conversational. Like a smart friend who happens to be a content expert.`
 
@@ -120,8 +121,8 @@ export async function POST(request: Request) {
     try {
       aiResponse = await generateWithFallback(prompt, systemPrompt, {
         model: 'llama-3.3-70b-versatile',
-        maxTokens: 1500,
-        temperature: 0.7,
+        maxTokens: 2500,
+        temperature: 0.65,
       })
     } catch (aiError: any) {
       console.error('[Chat API] AI error:', aiError.message);
@@ -151,18 +152,11 @@ export async function POST(request: Request) {
       })
     }
 
-    void supabase.from('usage_tracking').insert({
-      user_id: user.id,
-      type: 'chat',
-    }).then(({ error }) => {
-      if (error) console.error('[Chat API] Track usage error:', error.message)
-    })
-
     void supabase.rpc('increment_usage', {
       p_user_id: user.id,
       p_type: 'chat',
     }).then(({ error }) => {
-      if (error) console.error('[Chat API] Increment usage error:', error.message)
+      if (error) console.error('[Chat API] Track usage error:', error.message)
     })
 
     return NextResponse.json({ response: aiResponse, conversationId: finalConversationId })

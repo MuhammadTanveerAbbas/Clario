@@ -40,6 +40,7 @@ export async function GET() {
       chat: 0,
       remix: 0,
       brand_voice: 0,
+      creator_mode: 0,
     };
 
     usageData?.forEach((record) => {
@@ -50,9 +51,10 @@ export async function GET() {
       });
       dailyUsage[dateKey] = (dailyUsage[dateKey] || 0) + 1;
 
-      const type = record.type as keyof typeof featureUsage;
+      const rawType = record.type;
+      const type = rawType === "summarize" ? "summary" : rawType;
       if (type in featureUsage) {
-        featureUsage[type]++;
+        featureUsage[type as keyof typeof featureUsage]++;
       }
     });
 
@@ -77,6 +79,8 @@ export async function GET() {
         name:
           name === "brand_voice"
             ? "Brand Voice"
+            : name === "creator_mode"
+            ? "Creator Mode"
             : name.charAt(0).toUpperCase() + name.slice(1),
         value,
       }))

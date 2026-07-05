@@ -442,8 +442,9 @@ export default function SummarizerPage() {
 
   const pasteTextAreaRef = useRef<HTMLTextAreaElement>(null);
 
-  const [tab, setTab] = useState<"youtube" | "text">("text");
+  const [tab, setTab] = useState<"youtube" | "text" | "url">("text");
   const [youtubeUrl, setYoutubeUrl] = useState("");
+  const [webUrl, setWebUrl] = useState("");
   const [pasteText, setPasteText] = useState("");
   const [selectedMode, setSelectedMode] =
     useState<SummarizeMode>("executive-brief");
@@ -454,6 +455,7 @@ export default function SummarizerPage() {
     author: string;
     thumbnail: string;
   } | null>(null);
+  const [pageMeta, setPageMeta] = useState<{ title: string; url: string; charCount: number } | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingMsg, setLoadingMsg] = useState("Summarizing...");
   const [showHistory, setShowHistory] = useState(false);
@@ -499,29 +501,21 @@ export default function SummarizerPage() {
     setHistoryLoading(true);
     try {
       const { data } = await supabase
-        .from("ai_summaries")
-        .select("id, mode, original_text, summary_text, created_at")
+        .from("summarizer_history")
+        .select("id, summary_mode, source_type, source_title, input_text, output_text, created_at")
         .eq("user_id", authUser?.id)
         .order("created_at", { ascending: false })
         .limit(20);
       if (data) {
         setHistory(
-          data.map(
-            (r: {
-              id: string;
-              mode: string;
-              original_text: string;
-              summary_text: string;
-              created_at: string;
-            }) => ({
-              id: r.id,
-              mode: r.mode,
-              source_type: "paste_text",
-              input_text: r.original_text || "",
-              output_text: r.summary_text || "",
-              created_at: r.created_at,
-            }),
-          ),
+          data.map((r) => ({
+            id: r.id,
+            mode: r.summary_mode,
+            source_type: r.source_type,
+            input_text: r.input_text || "",
+            output_text: r.output_text || "",
+            created_at: r.created_at,
+          })),
         );
       }
     } catch (e) {
@@ -532,31 +526,35 @@ export default function SummarizerPage() {
 
   const handleSummarize = async () => {
     const text = tab === "text" ? pasteText.trim() : "";
-    const url = tab === "youtube" ? youtubeUrl.trim() : "";
-    if (!text && !url) {
-      addToast("Please enter some text or a YouTube URL", "error");
+    const ytUrl = tab === "youtube" ? youtubeUrl.trim() : "";
+    const articleUrl = tab === "url" ? webUrl.trim() : "";
+    if (!text && !ytUrl && !articleUrl) {
+      addToast("Please enter text, a web URL, or a YouTube URL", "error");
       return;
     }
     if (text && text.length < 10) {
-      addToast("Text is too short", "error");
+      addToast("Text is too short — need at least 10 characters", "error");
       return;
     }
 
     setLoading(true);
     setOutput("");
     setVideoMeta(null);
+    setPageMeta(null);
 
     try {
       const apiMode = MODE_API_MAP[selectedMode];
       let finalText = text;
-      let finalUrl = "";
+      let finalYoutubeUrl = "";
+      let sourceUrl = "";
+      let sourceTitle = "";
 
       if (tab === "youtube") {
         setLoadingMsg("Fetching transcript...");
         const ytRes = await fetch("/api/youtube", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url }),
+          body: JSON.stringify({ url: ytUrl }),
         });
         const ytData = await ytRes.json();
         if (!ytRes.ok) {
@@ -564,25 +562,52 @@ export default function SummarizerPage() {
             ytData.error || ytData.hint || "Failed to fetch transcript",
           );
         }
+        if (!ytData.transcript || ytData.transcript.length < 50) {
+          throw new Error("Could not extract enough transcript from this video. Try a video with captions enabled.");
+        }
         finalText = ytData.transcript;
-        finalUrl = ytData.videoUrl || url;
+        finalYoutubeUrl = ytData.videoUrl || ytUrl;
+        sourceTitle = ytData.title || "";
         if (ytData.title || ytData.author) {
           setVideoMeta({
             title: ytData.title || "",
             author: ytData.author || "",
             thumbnail: ytData.thumbnail || "",
           });
-          setOutputTitle(ytData.title || url);
+          setOutputTitle(ytData.title || ytUrl);
         } else {
-          setOutputTitle(url);
+          setOutputTitle(ytUrl);
         }
+      } else if (tab === "url") {
+        setLoadingMsg("Fetching page content...");
+        const fetchRes = await fetch("/api/fetch-url", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: articleUrl }),
+        });
+        const fetchData = await fetchRes.json();
+        if (!fetchRes.ok) {
+          throw new Error(fetchData.error || "Failed to fetch URL content");
+        }
+        finalText = fetchData.text;
+        sourceUrl = fetchData.url || articleUrl;
+        sourceTitle = fetchData.title || fetchData.url || articleUrl;
+        setPageMeta({
+          title: sourceTitle,
+          url: sourceUrl,
+          charCount: fetchData.charCount || finalText.length,
+        });
+        setOutputTitle(sourceTitle);
       } else {
         setOutputTitle("Summary");
+        sourceTitle = "Pasted text";
       }
 
-      setLoadingMsg("Generating summary...");
+      setLoadingMsg(`Generating ${MODES.find(m => m.id === selectedMode)?.label || "summary"}...`);
       const body: Record<string, string> = { text: finalText, mode: apiMode };
-      if (finalUrl) body.youtubeUrl = finalUrl;
+      if (finalYoutubeUrl) body.youtubeUrl = finalYoutubeUrl;
+      if (sourceUrl) body.sourceUrl = sourceUrl;
+      if (sourceTitle) body.sourceTitle = sourceTitle;
 
       const res = await fetch("/api/summarize", {
         method: "POST",
@@ -597,6 +622,7 @@ export default function SummarizerPage() {
       const summaryText: string = data.summary || "";
       setOutput(summaryText);
       addToast("Summary generated", "success");
+      void loadHistory();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Something went wrong";
       addToast(msg, "error");
@@ -802,8 +828,7 @@ export default function SummarizerPage() {
                   Text Summarizer
                 </h1>
                 <p style={{ fontSize: ".88rem", color: "var(--text3)" }}>
-                  Summarize anything in 10 different ways. Paste text or drop a
-                  YouTube URL.
+                  Summarize articles, YouTube videos, or pasted text in 10 specialized modes.
                 </p>
               </div>
 
@@ -820,7 +845,11 @@ export default function SummarizerPage() {
                     gap: 8,
                   }}
                 >
-                  {(["text", "youtube"] as const).map((t) => (
+                  {([
+                    { id: "text" as const, label: "Paste Text" },
+                    { id: "url" as const, label: "Web URL" },
+                    { id: "youtube" as const, label: "YouTube" },
+                  ]).map(({ id: t, label }) => (
                     <button
                       key={t}
                       onClick={() => setTab(t)}
@@ -828,50 +857,37 @@ export default function SummarizerPage() {
                         display: "flex",
                         alignItems: "center",
                         gap: 6,
-                        padding: "7px 18px",
+                        padding: "7px 14px",
                         borderRadius: 8,
                         border: "none",
                         cursor: "pointer",
                         fontFamily: "var(--sans)",
-                        fontSize: ".82rem",
+                        fontSize: ".78rem",
                         fontWeight: 500,
                         background: tab === t ? "hsl(var(--accent))" : "transparent",
                         color: tab === t ? "#fff" : "var(--text3)",
                         transition: "all .15s",
+                        whiteSpace: "nowrap",
                       }}
                     >
                       {t === "text" ? (
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="1.8"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                           <polyline points="14,2 14,8 20,8" />
-                          <line x1="16" y1="13" x2="8" y2="13" />
-                          <line x1="16" y1="17" x2="8" y2="17" />
+                        </svg>
+                      ) : t === "url" ? (
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="12" r="10" />
+                          <line x1="2" y1="12" x2="22" y2="12" />
+                          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
                         </svg>
                       ) : (
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="1.8"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 0 0 1.46 6.42 29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.96C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.96A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z" />
                           <polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" />
                         </svg>
                       )}
-                      {t === "text" ? "Paste Text" : "YouTube URL"}
+                      {label}
                     </button>
                   ))}
                 </div>
@@ -934,6 +950,50 @@ export default function SummarizerPage() {
                           {loading ? loadingMsg : "Summarize"}
                         </button>
                       </div>
+                    </>
+                  ) : tab === "url" ? (
+                    <>
+                      <input
+                        value={webUrl}
+                        onChange={(e) => setWebUrl(e.target.value)}
+                        placeholder="https://example.com/article..."
+                        style={{
+                          width: "100%",
+                          height: 46,
+                          background: "var(--bg2)",
+                          border: "1px solid hsl(var(--border))",
+                          borderRadius: 10,
+                          padding: "0 14px",
+                          fontFamily: "var(--sans)",
+                          fontSize: ".88rem",
+                          color: "var(--text)",
+                          outline: "none",
+                          display: "block",
+                        }}
+                      />
+                      <p style={{ fontSize: ".72rem", color: "var(--text3)", marginTop: 8, marginBottom: 0 }}>
+                        Fetches and extracts article text from any public web page.
+                      </p>
+                      <button
+                        onClick={handleSummarize}
+                        disabled={loading || !webUrl.trim()}
+                        style={{
+                          marginTop: 12,
+                          width: "100%",
+                          height: 42,
+                          background: "hsl(var(--accent))",
+                          color: "#fff",
+                          border: "none",
+                          borderRadius: 9,
+                          fontFamily: "var(--sans)",
+                          fontSize: ".84rem",
+                          fontWeight: 600,
+                          cursor: loading || !webUrl.trim() ? "not-allowed" : "pointer",
+                          opacity: loading || !webUrl.trim() ? 0.5 : 1,
+                        }}
+                      >
+                        {loading ? loadingMsg : "Fetch & Summarize"}
+                      </button>
                     </>
                   ) : (
                     <>
@@ -1097,6 +1157,20 @@ export default function SummarizerPage() {
                       >
                         {videoMeta.title}
                         {videoMeta.author ? ` · ${videoMeta.author}` : ""}
+                      </span>
+                    ) : pageMeta?.title ? (
+                      <span
+                        style={{
+                          fontSize: ".84rem",
+                          color: "var(--text2)",
+                          flex: 1,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {pageMeta.title}
+                        {pageMeta.charCount ? ` · ${pageMeta.charCount.toLocaleString()} chars` : ""}
                       </span>
                     ) : (
                       <span
@@ -1351,6 +1425,11 @@ export default function SummarizerPage() {
                         >
                           {output}
                         </ReactMarkdown>
+                        {output && !loading && (
+                          <p style={{ marginTop: 16, fontSize: ".72rem", color: "var(--text3)", fontFamily: "var(--sans)" }}>
+                            {output.split(/\s+/).filter(Boolean).length.toLocaleString()} words · ~{Math.max(1, Math.ceil(output.split(/\s+/).filter(Boolean).length / 200))} min read
+                          </p>
+                        )}
                       </div>
                     )}
                   </div>

@@ -1,8 +1,5 @@
 "use client";
 
-import { MktNav } from "@/components/marketing/MktNav";
-import { MktFooter } from "@/components/marketing/MktFooter";
-
 export default function PrivacyPage() {
   return (
     <>
@@ -23,7 +20,6 @@ export default function PrivacyPage() {
         .legal-a{color:var(--o);text-decoration:none}
         .legal-a:hover{text-decoration:underline}
       ` }} />
-      <MktNav />
       <div className="legal-wrap">
         <h1 className="legal-h1">Privacy <em>Policy.</em></h1>
         <p className="legal-meta">Last updated: March 23, 2025 · Clario is operated by Clario AI Ltd.</p>
@@ -97,7 +93,6 @@ export default function PrivacyPage() {
           <p className="legal-p">Questions? Email <a href="mailto:privacy@clario.ai" className="legal-a">privacy@clario.ai</a> or write to: Clario AI Ltd., [Address on file].</p>
         </div>
       </div>
-      <MktFooter />
     </>
   );
 }

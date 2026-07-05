@@ -6,7 +6,7 @@
 
 **AI-powered content platform for creators summarize, remix, and chat your way to better content**
 
-[![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen?style=for-the-badge)](https://clario.vercel.app)
+[![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen?style=for-the-badge)](https://clario-hub.vercel.app)
 [![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://typescriptlang.org)
 [![Next.js](https://img.shields.io/badge/Next.js-black?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org)
@@ -54,7 +54,7 @@ Clario is a production-ready SaaS platform built for YouTubers, podcasters, blog
 | Charts           | Recharts                                                 |
 | Database         | Supabase (PostgreSQL + RLS)                               |
 | Auth             | Supabase Auth (PKCE flow)                                 |
-| AI               | Groq SDK `openai/gpt-oss-120b`, `llama-3.3-70b-versatile` |
+| AI               | Groq SDK `llama-3.3-70b-versatile` (primary) |
 | Payments         | Stripe (Checkout + Billing Portal + Webhooks)                |
 | Forms            | React Hook Form + Zod                                      |
 | Package Manager  | pnpm                                                     |
@@ -157,13 +157,15 @@ clario/
 │   ├── hooks/              # Custom React hooks
 │   ├── lib/
 │   │   ├── supabase/        # Supabase client + server helpers
-│   │   ├── ai-fallback.ts  # Groq wrapper with error normalization
-│   │   ├── usage-limits.ts # Tier-based request limits
+│   │   ├── ai-fallback.ts       # Groq wrapper with error normalization
+│   │   ├── usage-limits.ts      # Tier-based request limits
 │   │   ├── security-config.ts
 │   │   ├── input-validation.ts
-│   │   └── stripe.ts
-│   └── middleware/
-│       └── rate-limit.ts
+│   │   ├── sanitize.ts
+│   │   ├── csrf.ts
+│   │   ├── upstash-rate-limit.ts
+│   │   ├── stripe.ts
+│   │   └── youtube-engine.ts
 ├── .env.example
 ├── middleware.ts
 ├── next.config.ts
@@ -246,20 +248,8 @@ create table brand_voices (
 create table usage_tracking (
   id uuid default gen_random_uuid() primary key,
   user_id uuid references profiles(id) on delete cascade,
-  type text check (type in ('summary', 'chat', 'remix', 'creator_mode')),
+  type text check (type in ('summary', 'chat', 'remix', 'brand_voice', 'creator_mode')),
   created_at timestamptz default now()
-);
-
-create table usage_stats (
-  id uuid default gen_random_uuid() primary key,
-  user_id uuid references profiles(id) on delete cascade,
-  date date not null,
-  total_requests integer default 0,
-  summaries_count integer default 0,
-  chats_count integer default 0,
-  writing_count integer default 0,
-  meeting_notes_count integer default 0,
-  unique(user_id, date)
 );
 
 create table processed_webhook_events (
@@ -300,7 +290,6 @@ alter table chat_sessions enable row level security;
 alter table chat_messages enable row level security;
 alter table brand_voices enable row level security;
 alter table usage_tracking enable row level security;
-alter table usage_stats enable row level security;
 alter table feedback enable row level security;
 alter table calendar_events enable row level security;
 
@@ -311,7 +300,6 @@ create policy "Users own their sessions" on chat_sessions for all using (auth.ui
 create policy "Users own their messages" on chat_messages for all using (auth.uid() = user_id);
 create policy "Users own their brand voices" on brand_voices for all using (auth.uid() = user_id);
 create policy "Users own their usage" on usage_tracking for all using (auth.uid() = user_id);
-create policy "Users own their stats" on usage_stats for all using (auth.uid() = user_id);
 create policy "Users own their feedback" on feedback for all using (auth.uid() = user_id);
 create policy "Users own their calendar events" on calendar_events for all using (auth.uid() = user_id);
 ```

@@ -24,7 +24,22 @@ const SummarizeSchema = z.object({
     'bullet-summary',
   ]),
   youtubeUrl: z.string().optional(),
+  sourceUrl: z.string().optional(),
+  sourceTitle: z.string().optional(),
 })
+
+const MODE_CONFIG: Record<string, { maxTokens: number; minWords: number }> = {
+  'bullet-summary': { maxTokens: 2500, minWords: 350 },
+  'action-items': { maxTokens: 3000, minWords: 400 },
+  'decisions': { maxTokens: 2800, minWords: 380 },
+  'executive-brief': { maxTokens: 2800, minWords: 450 },
+  'full-breakdown': { maxTokens: 5000, minWords: 800 },
+  'key-quotes': { maxTokens: 3200, minWords: 500 },
+  'sentiment': { maxTokens: 2500, minWords: 400 },
+  'eli5': { maxTokens: 2200, minWords: 350 },
+  'swot': { maxTokens: 3500, minWords: 550 },
+  'meeting-minutes': { maxTokens: 4000, minWords: 600 },
+}
 
 const MODE_PROMPTS: Record<string, string> = {
   'bullet-summary': `You are a professional content summarizer. Create a clean, scannable bullet-point summary.
@@ -403,7 +418,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid input', details: result.error.issues }, { status: 400 })
     }
 
-    const { text, mode, youtubeUrl } = result.data
+    const { text, mode, youtubeUrl, sourceUrl, sourceTitle } = result.data
 
     const validation = sanitizeAndValidate(text, 60000)
     if (!validation.valid) {
@@ -441,33 +456,46 @@ export async function POST(request: Request) {
     }
 
     const modePrompt = MODE_PROMPTS[mode] || MODE_PROMPTS['bullet-summary']
+    const modeConfig = MODE_CONFIG[mode] || MODE_CONFIG['bullet-summary']
 
     const systemPrompt = `${modePrompt}
 
 CRITICAL RULES:
-- Write all words normally  never add spaces between letters of a word
+- Write all words normally — never add spaces between letters of a word
 - Use proper markdown: ## for headers, **bold**, - for bullets, > for quotes, --- for dividers
-- Be specific and use actual content from the text, not generic placeholders
+- Extract REAL facts, names, numbers, dates, and quotes directly from the source text — never invent or use placeholder text like "[Point title]" or "[Detail]"
+- Write at least ${modeConfig.minWords} words. Be thorough and substantive, not generic
+- Every bullet and section must reference specific content from the source
+- If information is missing (e.g. no date mentioned), write "Not specified" instead of guessing
 - Keep formatting clean and consistent throughout`
 
-    const contextNote = youtubeUrl ? `\n\n[Source: ${youtubeUrl}]` : ''
-    const userPrompt = `Analyze and summarize the following content:${contextNote}\n\n---\n\n${sanitizedText}`
+    const sourceParts: string[] = []
+    if (sourceTitle) sourceParts.push(`Title: ${sourceTitle}`)
+    if (youtubeUrl) sourceParts.push(`YouTube: ${youtubeUrl}`)
+    else if (sourceUrl) sourceParts.push(`URL: ${sourceUrl}`)
+    const contextNote = sourceParts.length ? `\n\n[Source metadata]\n${sourceParts.join('\n')}` : ''
+    const userPrompt = `Analyze and summarize the following content. Use ONLY information present in the text below.${contextNote}\n\n---\n\n${sanitizedText}`
 
     let summary: string;
     try {
       summary = await generateWithFallback(userPrompt, systemPrompt, {
         model: 'llama-3.3-70b-versatile',
-        maxTokens: 3000,
-        temperature: 0.15,
+        maxTokens: modeConfig.maxTokens,
+        temperature: 0.12,
       })
     } catch (aiError: any) {
       console.error('[Summarize API] AI error:', aiError.message);
       return NextResponse.json({ error: aiError.message || 'Failed to generate summary' }, { status: 500 })
     }
 
+    const resolvedSourceUrl = youtubeUrl || sourceUrl || null
+    const resolvedSourceType = youtubeUrl ? 'youtube_url' : 'paste_text'
+
     void supabase.from('summarizer_history').insert({
       user_id: user.id,
-      source_type: 'paste_text',
+      source_type: resolvedSourceType,
+      source_url: resolvedSourceUrl,
+      source_title: sourceTitle || null,
       input_text: sanitizedText.substring(0, 10000),
       output_text: summary,
       summary_mode: mode,
@@ -475,18 +503,11 @@ CRITICAL RULES:
       if (error) console.error('[Summarize API] DB insert error:', error.message)
     })
 
-    void supabase.from('usage_tracking').insert({
-      user_id: user.id,
-      type: 'summary',
-    }).then(({ error }) => {
-      if (error) console.error('[Summarize API] Track usage error:', error.message)
-    })
-
     void supabase.rpc('increment_usage', {
       p_user_id: user.id,
       p_type: 'summary',
     }).then(({ error }) => {
-      if (error) console.error('[Summarize API] Increment usage error:', error.message)
+      if (error) console.error('[Summarize API] Track usage error:', error.message)
     })
 
     return NextResponse.json({ summary })

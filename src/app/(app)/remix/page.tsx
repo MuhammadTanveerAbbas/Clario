@@ -20,8 +20,22 @@ interface BrandVoice {
   id: string;
   name: string;
   tone?: string;
+  vocabulary?: string;
   personality?: string;
+  description?: string;
   is_active: boolean;
+}
+
+function formatBrandVoice(voice: BrandVoice): string {
+  return [
+    `Name: ${voice.name}`,
+    voice.tone && `Tone: ${voice.tone}`,
+    voice.vocabulary && `Vocabulary: ${voice.vocabulary}`,
+    voice.personality && `Personality: ${voice.personality}`,
+    voice.description && `Description: ${voice.description}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 const NAV_ITEMS: {
@@ -387,6 +401,7 @@ export default function RemixPage() {
         body: JSON.stringify({
           content: content.trim(),
           formats: Array.from(selectedFormats),
+          ...(activeBrandVoice && { brandVoice: formatBrandVoice(activeBrandVoice) }),
         }),
       });
       if (!res.ok) {

@@ -17,7 +17,9 @@ export const ThemeContext = createContext<ThemeContextType | undefined>(
 
 function getInitialTheme(): Theme {
   if (typeof window === "undefined") return "dark";
-  return (localStorage.getItem("clario-theme") as Theme) || "dark";
+  const stored = localStorage.getItem("clario-theme") as Theme | null;
+  if (stored === "light" || stored === "dark") return stored;
+  return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {

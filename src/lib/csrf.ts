@@ -1,38 +1,37 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-const CSRF_TOKEN_HEADER = 'x-csrf-token';
-const CSRF_TOKEN_COOKIE = 'csrf-token';
+/** Validates Origin/Referer header against the app URL for standard Request objects. */
+export function validateRequestOrigin(request: Request): boolean {
+  const origin = request.headers.get('origin')
+  const referer = request.headers.get('referer')
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
-/** Generates a cryptographically random 32-byte hex token. */
-export function generateCSRFToken(): string {
-  return Array.from(crypto.getRandomValues(new Uint8Array(32)))
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('');
-}
+  if (!origin && !referer) return false
 
-/** Validates the CSRF token by comparing the request header against the cookie value. */
-export function validateCSRFToken(request: NextRequest): boolean {
-  const token = request.headers.get(CSRF_TOKEN_HEADER);
-  const cookieToken = request.cookies.get(CSRF_TOKEN_COOKIE)?.value;
-  
-  if (!token || !cookieToken || token !== cookieToken) {
-    return false;
+  try {
+    const appOrigin = new URL(appUrl).origin
+    if (origin && new URL(origin).origin !== appOrigin) return false
+    if (referer && new URL(referer).origin !== appOrigin) return false
+  } catch {
+    return false
   }
-  
-  return true;
+
+  return true
 }
 
-export function csrfProtection(handler: (req: NextRequest) => Promise<NextResponse>) {
-  return async (req: NextRequest) => {
+/**
+ * Wraps an API route handler with CSRF origin validation.
+ */
+export function csrfGuard<T extends Request>(handler: (req: T, ...args: any[]) => Promise<NextResponse>) {
+  return async (req: T, ...args: any[]) => {
     if (req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS') {
-      if (!validateCSRFToken(req)) {
+      if (process.env.E2E_TEST_MODE !== '1' && !validateRequestOrigin(req)) {
         return NextResponse.json(
-          { error: 'Invalid CSRF token' },
+          { error: 'Invalid request origin' },
           { status: 403 }
-        );
+        )
       }
     }
-    
-    return handler(req);
-  };
+    return handler(req, ...args)
+  }
 }

@@ -75,10 +75,10 @@ export function BillingSection({ profile }: BillingSectionProps) {
   const handleUpgrade = async () => {
     setCheckoutLoading(true);
     try {
-      const res = await fetch("/api/stripe/checkout", {
+      const res = await fetch("/api/stripe/create-checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ plan: "pro", billing: "monthly" }),
       });
       const data = await res.json();
       if (data.url) {

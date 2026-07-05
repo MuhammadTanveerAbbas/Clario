@@ -38,8 +38,8 @@ export function useSettings({
         try {
             setLoading(true)
             const { data, error } = await supabase
-                .from('users')
-                .select('name, email, subscription_tier')
+                .from('profiles')
+                .select('full_name, email, subscription_tier')
                 .eq('id', userId)
                 .single()
 
@@ -48,7 +48,7 @@ export function useSettings({
 
             if (data) {
                 setProfile({
-                    name: data.name || userName || '',
+                    name: data.full_name || userName || '',
                     email: data.email || userEmail || '',
                     subscription_tier: data.subscription_tier || 'free',
                     subscription_status: 'active',
@@ -71,8 +71,8 @@ export function useSettings({
 
             try {
                 const { error } = await supabase
-                    .from('users')
-                    .update({ name })
+                    .from('profiles')
+                    .update({ full_name: name })
                     .eq('id', userId)
 
                 if (error) throw error

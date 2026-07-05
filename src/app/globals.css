@@ -265,7 +265,7 @@ img, video, svg {
     .summary-prose h2 {
         @apply text-xl font-bold mb-4 mt-8 pb-2;
         color: #ffffff;
-        border-left: 4px solid #4169E1;
+        border-left: 4px solid hsl(var(--accent));
         border-bottom: 2px solid rgba(65, 105, 225, 0.3);
         padding-left: 16px;
         background: linear-gradient(90deg, rgba(65, 105, 225, 0.15) 0%, transparent 100%);
@@ -278,7 +278,7 @@ img, video, svg {
         .summary-prose h2 {
             @apply text-2xl mb-4 mt-9 pb-3;
             padding-left: 18px;
-            border-left: 5px solid #4169E1;
+            border-left: 5px solid hsl(var(--accent));
         }
     }
     
@@ -319,7 +319,7 @@ img, video, svg {
         content: "▸";
         position: absolute;
         left: 0;
-        color: #4169E1;
+        color: hsl(var(--accent));
         font-size: 1.3em;
         animation: pulse 2s ease-in-out infinite;
     }
@@ -435,7 +435,7 @@ img, video, svg {
     .summary-prose ul li::before {
         content: "●";
         @apply absolute left-0 top-[0.4em];
-        color: #4169E1;
+        color: hsl(var(--accent));
         font-size: 1.2em;
         font-weight: bold;
         transition: all 0.2s ease;
@@ -508,18 +508,18 @@ img, video, svg {
     }
     
     .summary-prose a {
-        @apply text-[#4169E1] underline decoration-[#4169E1]/30 underline-offset-2;
+        @apply text-[hsl(var(--accent))] underline decoration-[hsl(var(--accent))]/30 underline-offset-2;
         transition: all 0.2s ease;
     }
     
     .summary-prose a:hover {
-        @apply decoration-[#4169E1];
+        @apply decoration-[hsl(var(--accent))];
         color: #818cf8;
         text-shadow: 0 0 8px rgba(65, 105, 225, 0.4);
     }
     
     .summary-prose blockquote {
-        @apply border-l-4 border-[#4169E1] pl-4 pr-3 py-3 my-4 italic rounded-r-lg;
+        @apply border-l-4 border-[hsl(var(--accent))] pl-4 pr-3 py-3 my-4 italic rounded-r-lg;
         background: linear-gradient(90deg, rgba(65, 105, 225, 0.2) 0%, rgba(65, 105, 225, 0.05) 100%);
         color: #ddd6fe;
         position: relative;
@@ -571,7 +571,7 @@ img, video, svg {
     .summary-prose hr {
         @apply my-8 border-0;
         height: 2px;
-        background: linear-gradient(90deg, transparent 0%, #4169E1 50%, transparent 100%);
+        background: linear-gradient(90deg, transparent 0%, hsl(var(--accent)) 50%, transparent 100%);
         opacity: 0.4;
         border-radius: 2px;
     }
@@ -582,7 +582,7 @@ img, video, svg {
     }
     
     .summary-prose th {
-        @apply px-4 py-3 text-left font-semibold border-b-2 border-[#4169E1];
+        @apply px-4 py-3 text-left font-semibold border-b-2 border-[hsl(var(--accent))];
         background: linear-gradient(135deg, rgba(65, 105, 225, 0.2) 0%, rgba(65, 105, 225, 0.1) 100%);
         color: #ffffff;
     }
@@ -602,7 +602,7 @@ img, video, svg {
         @apply mr-2;
         width: 18px;
         height: 18px;
-        accent-color: #4169E1;
+        accent-color: hsl(var(--accent));
         cursor: pointer;
     }
     

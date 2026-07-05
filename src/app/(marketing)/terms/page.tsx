@@ -1,8 +1,5 @@
 "use client";
 
-import { MktNav } from "@/components/marketing/MktNav";
-import { MktFooter } from "@/components/marketing/MktFooter";
-
 export default function TermsPage() {
   return (
     <>
@@ -23,7 +20,6 @@ export default function TermsPage() {
         .legal-a{color:var(--o);text-decoration:none}
         .legal-a:hover{text-decoration:underline}
       ` }} />
-      <MktNav />
       <div className="legal-wrap">
         <h1 className="legal-h1">Terms of <em>Service.</em></h1>
         <p className="legal-meta">Last updated: March 23, 2025 · These terms govern your use of Clario.</p>
@@ -95,7 +91,6 @@ export default function TermsPage() {
           <p className="legal-p">Questions about these terms? Email <a href="mailto:legal@clario.ai" className="legal-a">legal@clario.ai</a>.</p>
         </div>
       </div>
-      <MktFooter />
     </>
   );
 }

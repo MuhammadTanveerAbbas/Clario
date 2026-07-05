@@ -62,15 +62,8 @@ export const metadata: Metadata = {
   },
   manifest: "/manifest.json",
   icons: {
-    icon: [
-      { url: "/favicon.ico", sizes: "any" },
-      { url: "/favicon.svg", type: "image/svg+xml" },
-      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
-      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
-      { url: "/favicon-192x192.png", sizes: "192x192", type: "image/png" },
-      { url: "/favicon-512x512.png", sizes: "512x512", type: "image/png" },
-    ],
-    apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
+    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/favicon.svg", type: "image/svg+xml" }],
   },
   openGraph: {
     type: "website",
@@ -121,15 +114,14 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               try {
-                const theme = localStorage.getItem('clario-theme') || 'dark';
-                document.documentElement.classList.add(theme);
+                var theme = localStorage.getItem('clario-theme');
+                if (!theme && window.matchMedia('(prefers-color-scheme: light)').matches) {
+                  theme = 'light';
+                }
+                document.documentElement.classList.add(theme || 'dark');
               } catch (e) {}
             `,
           }}
-        />
-        <Script
-          src="/suppress-extension-errors.js"
-          strategy="beforeInteractive"
         />
         <ClientProviders>
           <AuthProvider>

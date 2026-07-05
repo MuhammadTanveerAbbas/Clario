@@ -1,7 +1,5 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useRouter } from "next/navigation";
 
 function TypingEffect() {
   const phrases = ["Twitter thread","LinkedIn post","email newsletter","YouTube description","podcast show notes","blog outline","Instagram caption"];
@@ -193,23 +191,6 @@ function ComparisonTable() {
 }
 
 export default function LandingPage() {
-  const [scrolled, setScrolled] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const { user, signOut } = useAuth();
-  const router = useRouter();
-  
-  useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", handler);
-    return () => window.removeEventListener("scroll", handler);
-  }, []);
-
-  const handleSignOut = async () => {
-    await signOut();
-    router.push('/');
-    router.refresh();
-  };
-
   const remixFormats = [
     { icon: "𝕏", label: "Twitter Thread", preview: "🧵 I just analyzed 500 creator accounts.\n\nHere's the ONE system that separates 7-figure creators from everyone else:\n\n1/ They don't create MORE content.\n   They repurpose SMARTER.\n\n2/ One video → 10 formats → 10x the reach\n   Same effort. Exponential results." },
     { icon: "in", label: "LinkedIn Post", preview: "After 3 years building in public, here's what I wish someone told me:\n\nThe creators winning in 2025 aren't publishing the most.\nThey're publishing the smartest.\n\nOne anchor piece → repurposed everywhere → compounding reach with zero extra effort." },
@@ -239,27 +220,9 @@ export default function LandingPage() {
         @keyframes fu{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
         @keyframes mq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
         @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-        nav.ln{position:fixed;inset:0 0 auto;z-index:100;height:58px;padding:0 5%;display:flex;align-items:center;justify-content:space-between;transition:all .3s}
-        nav.ln.up{background:rgba(255,255,255,.9);backdrop-filter:blur(18px);box-shadow:0 1px 0 var(--g2)}
-        .logo-w{font-family:var(--serif);font-size:1.3rem;color:var(--bk);text-decoration:none;display:flex;align-items:center;gap:8px;font-weight:300;letter-spacing:-.02em}
-        .lm{width:26px;height:26px;background:var(--o);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-        .nl{display:flex;align-items:center;gap:24px;list-style:none}
-        .nl a{font-size:.82rem;color:var(--g5);text-decoration:none;transition:color .18s;font-weight:400}
-        .nl a:hover{color:var(--bk)}
-        .np{display:flex;align-items:center;gap:9px}
-        .btn-n{background:var(--bk);color:var(--w);padding:9px 20px;border-radius:9px;font-size:.82rem;font-weight:600;border:none;cursor:pointer;font-family:var(--sans);letter-spacing:-.01em;transition:all .2s}
-        .btn-n:hover{background:var(--o);transform:translateY(-1px)}
-        .nav-hamburger{display:none;background:none;border:none;cursor:pointer;padding:6px;color:var(--bk);flex-shrink:0}
-        .mobile-nav{display:none;position:fixed;inset:0;background:rgba(255,255,255,.97);backdrop-filter:blur(20px);z-index:200;flex-direction:column;align-items:center;justify-content:center;gap:28px}
-        .mobile-nav.open{display:flex}
-        .mobile-nav a{font-family:var(--serif);font-size:1.6rem;font-weight:300;color:var(--bk);text-decoration:none;letter-spacing:-.02em}
-        .mobile-nav-close{position:absolute;top:18px;right:5%;background:none;border:none;cursor:pointer;color:var(--bk);padding:6px}
-        .mobile-nav-cta{background:var(--bk);color:var(--w);padding:13px 36px;border-radius:10px;font-size:.9rem;font-weight:600;border:none;cursor:pointer;font-family:var(--sans);margin-top:8px;transition:background .2s}
-        .mobile-nav-cta:hover{background:var(--o)}
-        @media(max-width:680px){.nl{display:none}.np{display:none}.nav-hamburger{display:flex}}
-        .hero{min-height:100vh;padding:96px 5% 72px;display:grid;grid-template-columns:1fr 1.1fr;gap:52px;align-items:center;max-width:1160px;margin:0 auto}
-        @media(max-width:860px){.hero{grid-template-columns:1fr;text-align:center;padding-top:88px;gap:36px}}
-        @media(max-width:480px){.hero{padding:80px 4% 48px;gap:28px}}
+        .hero{min-height:calc(100vh - 66px);padding:48px 5% 72px;display:grid;grid-template-columns:1fr 1.1fr;gap:52px;align-items:center;max-width:1160px;margin:0 auto}
+        @media(max-width:860px){.hero{grid-template-columns:1fr;text-align:center;padding-top:40px;gap:36px}}
+        @media(max-width:480px){.hero{padding:32px 4% 48px;gap:28px}}
         .h-badge{display:inline-flex;align-items:center;gap:7px;background:var(--ol);border:1px solid var(--om);color:var(--o);font-size:.68rem;font-weight:600;padding:4px 11px;border-radius:100px;margin-bottom:18px;letter-spacing:.04em;animation:fu .6s ease both}
         .h-dot{width:6px;height:6px;background:var(--o);border-radius:50%;animation:pulse 1.5s infinite}
         .h-h1{font-family:var(--serif);font-size:clamp(2.4rem,4vw,3.8rem);line-height:1.06;letter-spacing:-.03em;font-weight:300;margin-bottom:9px;color:var(--bk);animation:fu .6s .1s ease both}
@@ -346,68 +309,6 @@ export default function LandingPage() {
         .s-title em{font-style:italic;color:var(--o)}
         .s-sub{font-size:.86rem;color:var(--g5);line-height:1.7;max-width:440px;margin:0 auto}
       `}</style>
-
-      <nav className={`ln${scrolled ? " up" : ""}`}>
-        <a href="/" className="logo-w">
-          <div className="lm">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
-              <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
-            </svg>
-          </div>
-          Clario
-        </a>
-        <ul className="nl">
-          <li><a href="/#features">Features</a></li>
-          <li><a href="/pricing">Pricing</a></li>
-          <li><a href="/#compare">Compare</a></li>
-        </ul>
-        <div className="np">
-          {user ? (
-            <>
-              <button className="btn-n" style={{ background: "transparent", color: "var(--g7)", border: "1.5px solid var(--g2)" }} onClick={() => window.location.href="/dashboard"}>
-                Dashboard
-              </button>
-              <button className="btn-n" onClick={handleSignOut}>
-                Sign out
-              </button>
-            </>
-          ) : (
-            <button className="btn-n" onClick={() => window.location.href="/sign-up"}>
-              Get started free
-            </button>
-          )}
-        </div>
-        <button className="nav-hamburger" onClick={() => setMobileOpen(true)} aria-label="Open menu">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
-          </svg>
-        </button>
-      </nav>
-
-      <div className={`mobile-nav${mobileOpen ? " open" : ""}`}>
-        <button className="mobile-nav-close" onClick={() => setMobileOpen(false)} aria-label="Close menu">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-        </button>
-        <a href="/#features" onClick={() => setMobileOpen(false)}>Features</a>
-        <a href="/pricing" onClick={() => setMobileOpen(false)}>Pricing</a>
-        <a href="/#compare" onClick={() => setMobileOpen(false)}>Compare</a>
-        {user ? (
-          <>
-            <button className="mobile-nav-cta" style={{ background: "transparent", color: "var(--bk)", border: "1.5px solid var(--g2)" }} onClick={() => { window.location.href = "/dashboard"; setMobileOpen(false); }}>
-              Dashboard
-            </button>
-            <button className="mobile-nav-cta" onClick={() => { handleSignOut(); setMobileOpen(false); }}>
-              Sign out
-            </button>
-          </>
-        ) : (
-          <button className="mobile-nav-cta" onClick={() => { window.location.href = "/sign-up"; setMobileOpen(false); }}>
-            Get started free
-          </button>
-        )}
-      </div>
 
       <section style={{ background: "var(--w)" }}>
         <div className="hero">
@@ -654,27 +555,6 @@ export default function LandingPage() {
           </div>
         </div>
       </div>
-
-      <footer className="lf">
-        <a href="/" className="logo-w">
-          <div className="lm" style={{ width: 22, height: 22, borderRadius: 6 }}>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
-              <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
-            </svg>
-          </div>
-          Clario
-        </a>
-        <ul className="f-links">
-          <li><a href="#features">Features</a></li>
-          <li><a href="/pricing">Pricing</a></li>
-          <li><a href="/privacy">Privacy</a></li>
-          <li><a href="/terms">Terms</a></li>
-          <li><a href="https://github.com/MuhammadTanveerAbbas/Clario-ai" target="_blank" rel="noreferrer">GitHub</a></li>
-          <li><a href="https://x.com/themvpguy" target="_blank" rel="noreferrer">Twitter</a></li>
-          <li><a href="https://linkedin.com/in/muhammadtanveerabbas" target="_blank" rel="noreferrer">LinkedIn</a></li>
-        </ul>
-        <p className="f-copy">© {new Date().getFullYear()} Clario · Built by <a href="https://themvpguy.vercel.app" target="_blank" rel="noreferrer" style={{ color: "var(--o)", textDecoration: "none" }}>The MVP Guy</a></p>
-      </footer>
     </>
   );
 }

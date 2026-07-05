@@ -272,7 +272,7 @@ export default function ChatPage() {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: "Request failed" }));
-        throw new Error(err.error || "Request failed");
+        throw new Error(err.message || err.error || "Request failed");
       }
       const data = await res.json();
       const aiContent: string = data.response || "";
@@ -300,10 +300,10 @@ export default function ChatPage() {
   };
 
   const STARTER_PROMPTS = [
-    "Analyze my last video for content ideas",
-    "Write a Twitter thread from this transcript",
-    "Improve the hook of this intro",
-    "Repurpose this content for LinkedIn",
+    "Write 5 YouTube title options for a video about productivity hacks",
+    "Turn this idea into a Twitter thread: how I grew from 0 to 10k subscribers",
+    "Give me 3 hook scripts for a podcast intro about AI tools for creators",
+    "Create a LinkedIn post repurposing a tutorial video into professional advice",
   ];
 
   const isDark = theme === "dark";
@@ -793,7 +793,28 @@ export default function ChatPage() {
                           ))}
                         </div>
                       ) : (
-                        <MarkdownRenderer content={msg.content} />
+                        <div style={{ position: "relative" }}>
+                          <MarkdownRenderer content={msg.content} />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(msg.content);
+                              addToast("Copied to clipboard", "success");
+                            }}
+                            style={{
+                              marginTop: 8,
+                              background: "none",
+                              border: "none",
+                              color: "var(--text3)",
+                              fontSize: ".72rem",
+                              cursor: "pointer",
+                              padding: 0,
+                              fontFamily: "var(--sans)",
+                            }}
+                          >
+                            Copy response
+                          </button>
+                        </div>
                       )}
                     </div>
                   ))

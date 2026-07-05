@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { MktNav } from "@/components/marketing/MktNav";
-import { MktFooter } from "@/components/marketing/MktFooter";
 
 function FaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
@@ -151,8 +149,6 @@ export default function PricingPage() {
         .faq-a{font-size:.84rem;color:var(--g5);line-height:1.7;margin-top:10px;padding-right:24px}
       `}</style>
 
-      <MktNav />
-
       {/* Hero */}
       <div className="price-hero">
         <div style={{ fontSize: ".68rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".12em", color: "var(--o)", marginBottom: 12 }}>Pricing</div>
@@ -251,8 +247,6 @@ export default function PricingPage() {
           Get started free
         </button>
       </section>
-
-      <MktFooter />
     </>
   );
 }

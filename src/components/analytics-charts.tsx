@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   LineChart,
   Line,
@@ -32,7 +32,7 @@ interface AnalyticsData {
 
 function EmptyChart({ title }: { title: string }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-[var(--card-b)] bg-[hsl(var(--card))] px-5 py-10 text-center">
+    <div className="flex min-h-[260px] flex-col items-center justify-center gap-3 rounded-xl border border-[var(--card-b)] bg-[hsl(var(--card))] p-5 text-center">
       <svg
         width="32"
         height="32"
@@ -76,30 +76,73 @@ const tooltipStyle = {
   boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
 };
 
-export function AnalyticsCharts() {
+export function AnalyticsCharts({ refreshKey = 0 }: { refreshKey?: number }) {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  useEffect(() => {
-    fetch("/api/dashboard-analytics")
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
+  const loadAnalytics = useCallback((silent = false) => {
+    if (!silent) {
+      setLoading(true);
+      setError(false);
+    }
+    fetch("/api/dashboard-analytics", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("Failed to load"))))
       .then(setData)
-      .catch(() => {})
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    loadAnalytics();
+  }, [loadAnalytics, refreshKey]);
+
+  useEffect(() => {
+    const refetchIfVisible = () => {
+      if (document.visibilityState === "visible") {
+        loadAnalytics(true);
+      }
+    };
+    document.addEventListener("visibilitychange", refetchIfVisible);
+    window.addEventListener("focus", refetchIfVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", refetchIfVisible);
+      window.removeEventListener("focus", refetchIfVisible);
+    };
+  }, [loadAnalytics]);
+
   if (loading) {
     return (
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="h-[260px] animate-pulse rounded-xl bg-[var(--bg3)]" />
         <div className="h-[260px] animate-pulse rounded-xl bg-[var(--bg3)]" />
       </div>
     );
   }
 
+  if (error) {
+    return (
+      <div className="flex min-h-[260px] flex-col items-center justify-center gap-3 rounded-xl border border-red-200 bg-red-50 p-5 text-center dark:border-red-900/40 dark:bg-red-950/20">
+        <p className="text-[12px] font-medium text-red-700 dark:text-red-400">
+          Couldn&apos;t load analytics
+        </p>
+        <p className="text-[11px] text-red-600/80 dark:text-red-400/70">
+          Check your connection and try again.
+        </p>
+        <button
+          type="button"
+          onClick={() => loadAnalytics()}
+          className="text-[11px] font-semibold text-[hsl(var(--accent))] transition-opacity hover:opacity-80"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
   if (!data || data.trendData.every((d) => d.usage === 0)) {
     return (
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <EmptyChart title="Activity" />
         <EmptyChart title="Features" />
       </div>
@@ -110,11 +153,11 @@ export function AnalyticsCharts() {
   const topFeatures = data.featureData.slice(0, 4);
 
   return (
-    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       {/* Activity line chart */}
-      <div className="rounded-xl border border-[var(--card-b)] bg-[hsl(var(--card))] p-4">
-        <div className="mb-3 flex items-center justify-between">
-          <h4 className="text-[11px] font-semibold text-[var(--text2)]">Activity</h4>
+      <div className="min-h-[260px] rounded-xl border border-[var(--card-b)] bg-[hsl(var(--card))] p-5">
+        <div className="mb-4 flex items-center justify-between">
+          <h4 className="text-[12px] font-semibold text-[var(--text2)]">Activity</h4>
           <span className="rounded-full bg-[var(--bg3)] px-2 py-0.5 text-[9px] font-medium text-[var(--text3)]">
             {data.totalUsage} total
           </span>
@@ -162,9 +205,9 @@ export function AnalyticsCharts() {
       </div>
 
       {/* Features bar chart */}
-      <div className="rounded-xl border border-[var(--card-b)] bg-[hsl(var(--card))] p-4">
-        <div className="mb-3">
-          <h4 className="text-[11px] font-semibold text-[var(--text2)]">Features</h4>
+      <div className="min-h-[260px] rounded-xl border border-[var(--card-b)] bg-[hsl(var(--card))] p-5">
+        <div className="mb-4">
+          <h4 className="text-[12px] font-semibold text-[var(--text2)]">Features</h4>
         </div>
         <ResponsiveContainer width="100%" height={200}>
           <BarChart

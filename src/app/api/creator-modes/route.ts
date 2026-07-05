@@ -110,14 +110,9 @@ export async function POST(request: Request) {
       { model: 'llama-3.3-70b-versatile', maxTokens: 2048, temperature: 0.7 }
     );
 
-    await supabase.from('usage_tracking').insert({
-      user_id: user.id,
-      type: 'brand_voice',
-    });
-
     await supabase.rpc('increment_usage', {
       p_user_id: user.id,
-      p_type: 'brand_voice',
+      p_type: 'creator_mode',
     });
 
     return NextResponse.json({ result, modeName: modeConfig.name });

@@ -1,10 +1,6 @@
 /**
- * In-process rate limiter.
- *
- * Works correctly in development and on single-instance deploys. On Vercel
- * serverless (multiple instances), each instance has its own store — rate
- * limiting is best-effort, not strict. For strict production rate limiting,
- * migrate to Upstash Redis later.
+ * In-process rate limiter fallback.
+ * Used by API routes and as fallback when Upstash Redis is not configured.
  */
 
 import { NextResponse } from 'next/server';

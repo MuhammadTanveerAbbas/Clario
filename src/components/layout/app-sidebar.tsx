@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSidebar } from "@/contexts/SidebarContext";
 import { createClient } from "@/lib/supabase/client";
@@ -12,8 +12,6 @@ import {
   MessageSquare,
   FileText,
   Settings,
-  ChevronLeft,
-  ChevronRight,
   PanelLeftClose,
   PanelLeft,
   Mic,
@@ -21,7 +19,6 @@ import {
   Calendar,
   LogOut,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const navigation = [
@@ -32,6 +29,77 @@ const navigation = [
   { name: "Brand Voice", href: "/brand-voice", icon: Mic },
   { name: "Calendar", href: "/calendar", icon: Calendar },
 ];
+
+function sidebarItemStyle(isActive: boolean): CSSProperties {
+  return {
+    background: isActive ? "var(--accent-l)" : "transparent",
+    color: isActive ? "hsl(var(--accent))" : "var(--text3)",
+    border: isActive ? "1px solid var(--accent-m)" : "1px solid transparent",
+  };
+}
+
+function SidebarNavItem({
+  href,
+  icon: Icon,
+  label,
+  isActive,
+  collapsed,
+  onClick,
+}: {
+  href?: string;
+  icon: typeof LayoutDashboard;
+  label: string;
+  isActive: boolean;
+  collapsed: boolean;
+  onClick?: () => void;
+}) {
+  const inner = (
+    <div
+      className={`flex items-center gap-3 rounded-lg py-2.5 transition-all duration-150 ${collapsed ? "justify-center px-0" : "px-3"}`}
+      style={sidebarItemStyle(isActive)}
+      onMouseEnter={(e) => {
+        if (!isActive) {
+          (e.currentTarget as HTMLDivElement).style.background = "var(--bg3)";
+          (e.currentTarget as HTMLDivElement).style.color = "var(--text2)";
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!isActive) {
+          Object.assign((e.currentTarget as HTMLDivElement).style, sidebarItemStyle(false));
+        }
+      }}
+    >
+      <Icon className="h-4 w-4 flex-shrink-0" />
+      <AnimatePresence>
+        {!collapsed && (
+          <motion.span
+            initial={{ opacity: 0, width: 0 }}
+            animate={{ opacity: 1, width: "auto" }}
+            exit={{ opacity: 0, width: 0 }}
+            transition={{ duration: 0.2 }}
+            className="truncate text-[13px] font-medium"
+          >
+            {label}
+          </motion.span>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+
+  if (href) {
+    return (
+      <Link href={href} className="block" onClick={onClick}>
+        {inner}
+      </Link>
+    );
+  }
+
+  return (
+    <button type="button" className="block w-full text-left" onClick={onClick}>
+      {inner}
+    </button>
+  );
+}
 
 export function AppSidebar() {
   const { collapsed, setCollapsed, mobileOpen, setMobileOpen } = useSidebar();
@@ -81,7 +149,7 @@ export function AppSidebar() {
       >
         {/* Logo */}
         <div
-          className="flex items-center justify-between px-6 py-5 w-full"
+          className="flex shrink-0 items-center justify-between px-6 py-4 w-full"
           style={{ borderBottom: "1px solid var(--sidebar-b)" }}
         >
           <AnimatePresence mode="wait">
@@ -132,203 +200,79 @@ export function AppSidebar() {
           </AnimatePresence>
         </div>
 
-        {/* Nav */}
-        <nav className="flex-1 p-3 overflow-y-auto space-y-1">
-          {navigation.map((item) => {
-            const isActive =
-              pathname === item.href ||
-              (item.href !== "/dashboard" &&
-                pathname?.startsWith(item.href + "/"));
-            const Icon = item.icon;
+        {/* Nav + footer — footer pinned to viewport bottom */}
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <nav className="min-h-0 flex-1 overflow-y-auto p-3 space-y-0.5">
+            {navigation.map((item) => {
+              const isActive =
+                pathname === item.href ||
+                (item.href !== "/dashboard" &&
+                  pathname?.startsWith(item.href + "/"));
+              const Icon = item.icon;
 
-            return (
+              return (
+                <SidebarNavItem
+                  key={item.name}
+                  href={item.href}
+                  icon={Icon}
+                  label={item.name}
+                  isActive={isActive}
+                  collapsed={collapsed}
+                  onClick={closeMobile}
+                />
+              );
+            })}
+          </nav>
+
+          <div
+            className="shrink-0 space-y-0.5 p-3 pb-4"
+            style={{ borderTop: "1px solid var(--sidebar-b)" }}
+          >
+            {!isPro && !collapsed && (
               <Link
-                key={item.name}
-                href={item.href}
-                className="block"
+                href="/pricing"
                 onClick={closeMobile}
+                className="mb-1 block rounded-lg px-3 py-2.5 text-center text-[13px] font-semibold text-white shadow-sm transition-opacity hover:opacity-95"
+                style={{
+                  background:
+                    "linear-gradient(135deg, hsl(var(--accent)), #f59e0b)",
+                }}
               >
-                <div
-                  className={`flex items-center gap-3 py-2 rounded-lg transition-all duration-150 ${collapsed ? "justify-center px-0" : "px-3"}`}
-                  style={{
-                    background: isActive ? "var(--accent-l)" : "transparent",
-                    color: isActive ? "hsl(var(--accent))" : "var(--text3)",
-                    border: isActive
-                      ? "1px solid var(--accent-m)"
-                      : "1px solid transparent",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) {
-                      (e.currentTarget as HTMLDivElement).style.background =
-                        "var(--bg3)";
-                      (e.currentTarget as HTMLDivElement).style.color =
-                        "var(--text2)";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) {
-                      (e.currentTarget as HTMLDivElement).style.background =
-                        "transparent";
-                      (e.currentTarget as HTMLDivElement).style.color =
-                        "var(--text3)";
-                    }
-                  }}
-                >
-                  <Icon className="h-4 w-4 flex-shrink-0" />
-                  <AnimatePresence>
-                    {!collapsed && (
-                      <motion.span
-                        initial={{ opacity: 0, width: 0 }}
-                        animate={{ opacity: 1, width: "auto" }}
-                        exit={{ opacity: 0, width: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="text-[13px] font-medium truncate"
-                      >
-                        {item.name}
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
-                </div>
+                Upgrade to Pro
               </Link>
-            );
-          })}
-        </nav>
-
-        {/* Bottom */}
-        <div
-          className="p-3 space-y-1"
-          style={{ borderTop: "1px solid var(--sidebar-b)" }}
-        >
-          {!isPro && !collapsed && (
-            <Link
-              href="/pricing"
-              onClick={closeMobile}
-              className="mb-2 block rounded-lg px-3 py-2.5 text-center text-[13px] font-semibold text-white shadow-sm hover:opacity-95"
-              style={{
-                background:
-                  "linear-gradient(135deg, hsl(var(--accent)), #f59e0b)",
-              }}
-            >
-              Upgrade to Pro
-            </Link>
-          )}
-
-          <Link href="/settings" onClick={closeMobile}>
-            <div
-              className={`flex items-center gap-3 py-2 rounded-lg transition-all duration-150 ${collapsed ? "justify-center px-0" : "px-3"}`}
-              style={{
-                background:
-                  pathname === "/settings" ||
-                  pathname?.startsWith("/settings/")
-                    ? "var(--accent-l)"
-                    : "transparent",
-                color:
-                  pathname === "/settings" ||
-                  pathname?.startsWith("/settings/")
-                    ? "hsl(var(--accent))"
-                    : "var(--text3)",
-              }}
-              onMouseEnter={(e) => {
-                const isSettingsActive =
-                  pathname === "/settings" ||
-                  pathname?.startsWith("/settings/");
-                if (!isSettingsActive) {
-                  (e.currentTarget as HTMLDivElement).style.background =
-                    "var(--bg3)";
-                  (e.currentTarget as HTMLDivElement).style.color =
-                    "var(--text2)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                const isSettingsActive =
-                  pathname === "/settings" ||
-                  pathname?.startsWith("/settings/");
-                if (!isSettingsActive) {
-                  (e.currentTarget as HTMLDivElement).style.background =
-                    "transparent";
-                  (e.currentTarget as HTMLDivElement).style.color =
-                    "var(--text3)";
-                }
-              }}
-            >
-              <Settings className="h-4 w-4 flex-shrink-0" />
-              <AnimatePresence>
-                {!collapsed && (
-                  <motion.span
-                    initial={{ opacity: 0, width: 0 }}
-                    animate={{ opacity: 1, width: "auto" }}
-                    exit={{ opacity: 0, width: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="text-[13px] font-medium"
-                  >
-                    Settings
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </div>
-          </Link>
-
-          <button
-            className={`block w-full flex items-center gap-3 py-2 rounded-lg transition-all duration-150 ${collapsed ? "justify-center px-0" : "px-3"}`}
-            style={{ color: "var(--text3)", background: "transparent" }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.background =
-                "var(--bg3)";
-              (e.currentTarget as HTMLButtonElement).style.color = "var(--text2)";
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.background =
-                "transparent";
-              (e.currentTarget as HTMLButtonElement).style.color = "var(--text3)";
-            }}
-            onClick={async () => {
-              await signOut();
-              router.push("/sign-in");
-            }}
-          >
-            <LogOut className="h-4 w-4 flex-shrink-0" />
-            <AnimatePresence>
-              {!collapsed && (
-                <motion.span
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: "auto" }}
-                  exit={{ opacity: 0, width: 0 }}
-                  className="text-[13px] font-medium"
-                >
-                  Sign out
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </button>
-
-          <button
-            onClick={() => setCollapsed(!collapsed)}
-            className={`w-full flex items-center rounded-lg h-9 transition-all duration-150 text-[13px] ${collapsed ? "justify-center px-0" : "gap-3 px-3"}`}
-            style={{
-              color: "var(--text3)",
-              background: "transparent",
-              border: "1px solid var(--sidebar-b)",
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.background =
-                "var(--bg3)";
-              (e.currentTarget as HTMLButtonElement).style.color = "var(--text2)";
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.background =
-                "transparent";
-              (e.currentTarget as HTMLButtonElement).style.color = "var(--text3)";
-            }}
-          >
-            {collapsed ? (
-              <PanelLeft className="h-4 w-4" />
-            ) : (
-              <>
-                <PanelLeftClose className="h-4 w-4" />
-                <span>Collapse</span>
-              </>
             )}
-          </button>
+
+            <SidebarNavItem
+              href="/settings"
+              icon={Settings}
+              label="Settings"
+              isActive={
+                pathname === "/settings" ||
+                (pathname?.startsWith("/settings/") ?? false)
+              }
+              collapsed={collapsed}
+              onClick={closeMobile}
+            />
+
+            <SidebarNavItem
+              icon={LogOut}
+              label="Sign out"
+              isActive={false}
+              collapsed={collapsed}
+              onClick={async () => {
+                await signOut();
+                router.push("/sign-in");
+              }}
+            />
+
+            <SidebarNavItem
+              icon={collapsed ? PanelLeft : PanelLeftClose}
+              label="Collapse"
+              isActive={false}
+              collapsed={collapsed}
+              onClick={() => setCollapsed(!collapsed)}
+            />
+          </div>
         </div>
       </motion.aside>
     </>

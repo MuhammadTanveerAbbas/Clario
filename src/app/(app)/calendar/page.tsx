@@ -286,6 +286,7 @@ function CalendarPageInner() {
         :root{--serif:var(--font-fraunces),Georgia,serif;--sans:var(--font-inter),system-ui,sans-serif}
         body{font-family:var(--sans);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;overflow-x:hidden}
         @keyframes fu{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
 
         .dash-layout{display:flex;height:100vh;overflow:hidden;background:var(--bg)}
 
@@ -382,7 +383,18 @@ function CalendarPageInner() {
                 </div>
 
                 {loading ? (
-                  <div style={{ textAlign: "center", padding: 60, color: "var(--text3)" }}>Loading...</div>
+                  <>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(40px, 1fr))", gap: 8, marginBottom: 8, minWidth: 280 }}>
+                      {DAYS.map(day => (
+                        <div key={day} style={{ height: 14, borderRadius: 4, background: "var(--bg3)", animation: "pulse 1.5s ease-in-out infinite" }} />
+                      ))}
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(40px, 1fr))", gap: 8, minWidth: 280 }}>
+                      {Array.from({ length: 35 }).map((_, i) => (
+                        <div key={i} style={{ minHeight: 90, borderRadius: 8, background: "var(--bg3)", animation: "pulse 1.5s ease-in-out infinite", animationDelay: `${(i % 7) * 0.05}s` }} />
+                      ))}
+                    </div>
+                  </>
                 ) : (
                   <>
                     <div style={{ overflowX: "auto" }}>
