@@ -381,9 +381,6 @@ create trigger on_auth_user_created
 - [x] AI Chat with session history
 - [x] Content Calendar
 - [x] Stripe subscription billing
-- [ ] Team/workspace collaboration
-- [ ] Chrome extension for one-click summarization
-- [ ] Mobile app
 
 ---
 
