@@ -114,28 +114,39 @@ export function AnalyticsCharts({ refreshKey = 0 }: { refreshKey?: number }) {
   if (loading) {
     return (
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div className="h-[260px] animate-pulse rounded-xl bg-[var(--bg3)]" />
-        <div className="h-[260px] animate-pulse rounded-xl bg-[var(--bg3)]" />
+        <div className="h-[260px] rounded-xl border border-[var(--card-b)] bg-[hsl(var(--card))] p-5 animate-pulse" />
+        <div className="h-[260px] rounded-xl border border-[var(--card-b)] bg-[hsl(var(--card))] p-5 animate-pulse" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex min-h-[260px] flex-col items-center justify-center gap-3 rounded-xl border border-red-200 bg-red-50 p-5 text-center dark:border-red-900/40 dark:bg-red-950/20">
-        <p className="text-[12px] font-medium text-red-700 dark:text-red-400">
-          Couldn&apos;t load analytics
-        </p>
-        <p className="text-[11px] text-red-600/80 dark:text-red-400/70">
-          Check your connection and try again.
-        </p>
-        <button
-          type="button"
-          onClick={() => loadAnalytics()}
-          className="text-[11px] font-semibold text-[hsl(var(--accent))] transition-opacity hover:opacity-80"
-        >
-          Retry
-        </button>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="flex min-h-[260px] flex-col items-center justify-center gap-3 rounded-xl border border-red-200 bg-red-50 p-5 text-center dark:border-red-900/40 dark:bg-red-950/20">
+          <p className="text-[12px] font-medium text-red-700 dark:text-red-400">
+            Couldn&apos;t load analytics
+          </p>
+          <button
+            type="button"
+            onClick={() => loadAnalytics()}
+            className="text-[11px] font-semibold text-[hsl(var(--accent))] transition-opacity hover:opacity-80"
+          >
+            Retry
+          </button>
+        </div>
+        <div className="flex min-h-[260px] flex-col items-center justify-center gap-3 rounded-xl border border-red-200 bg-red-50 p-5 text-center dark:border-red-900/40 dark:bg-red-950/20">
+          <p className="text-[12px] font-medium text-red-700 dark:text-red-400">
+            Couldn&apos;t load analytics
+          </p>
+          <button
+            type="button"
+            onClick={() => loadAnalytics()}
+            className="text-[11px] font-semibold text-[hsl(var(--accent))] transition-opacity hover:opacity-80"
+          >
+            Retry
+          </button>
+        </div>
       </div>
     );
   }
@@ -155,9 +166,9 @@ export function AnalyticsCharts({ refreshKey = 0 }: { refreshKey?: number }) {
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       {/* Activity line chart */}
-      <div className="min-h-[260px] rounded-xl border border-[var(--card-b)] bg-[hsl(var(--card))] p-5">
+      <div className="rounded-xl border border-[var(--card-b)] bg-[hsl(var(--card))] p-5">
         <div className="mb-4 flex items-center justify-between">
-          <h4 className="text-[12px] font-semibold text-[var(--text2)]">Activity</h4>
+          <h4 className="text-[12px] font-semibold text-[var(--text2)]">Activity (Last 7 days)</h4>
           <span className="rounded-full bg-[var(--bg3)] px-2 py-0.5 text-[9px] font-medium text-[var(--text3)]">
             {data.totalUsage} total
           </span>
@@ -205,9 +216,9 @@ export function AnalyticsCharts({ refreshKey = 0 }: { refreshKey?: number }) {
       </div>
 
       {/* Features bar chart */}
-      <div className="min-h-[260px] rounded-xl border border-[var(--card-b)] bg-[hsl(var(--card))] p-5">
+      <div className="rounded-xl border border-[var(--card-b)] bg-[hsl(var(--card))] p-5">
         <div className="mb-4">
-          <h4 className="text-[12px] font-semibold text-[var(--text2)]">Features</h4>
+          <h4 className="text-[12px] font-semibold text-[var(--text2)]">Features breakdown</h4>
         </div>
         <ResponsiveContainer width="100%" height={200}>
           <BarChart

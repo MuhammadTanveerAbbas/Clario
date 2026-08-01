@@ -86,23 +86,24 @@ export function MktNav() {
         <nav className="relative mx-auto flex h-[64px] max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           <ClarioLogo />
 
-          {/* Center nav — pill group on large screens */}
+          {/* Center nav — underline tab style */}
           <div className="hidden lg:flex absolute left-1/2 -translate-x-1/2">
-            <ul className="flex items-center gap-1 list-none m-0 p-1 rounded-xl bg-stone-100/80 border border-stone-200/60 shadow-inner shadow-stone-900/[0.03]">
+            <ul className="flex items-center list-none m-0 p-0">
               {NAV_LINKS.map(({ href, label }) => {
                 const isActive = href === "/pricing" && pathname === "/pricing";
                 return (
-                  <li key={href}>
+                  <li key={href} className="relative">
                     <Link
                       href={href}
-                      className={`inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium no-underline transition-all duration-200 ${
-                        isActive
-                          ? "bg-white text-stone-900 shadow-sm shadow-stone-900/5 ring-1 ring-stone-200/80"
-                          : "text-stone-500 hover:text-stone-900 hover:bg-white/70"
+                      className={`inline-flex items-center px-5 py-5 text-sm font-medium no-underline transition-colors duration-200 ${
+                        isActive ? "text-stone-900" : "text-stone-500 hover:text-stone-900"
                       }`}
                     >
                       {label}
                     </Link>
+                    {isActive && (
+                      <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-orange-500 rounded-full" />
+                    )}
                   </li>
                 );
               })}

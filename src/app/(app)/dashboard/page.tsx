@@ -56,8 +56,12 @@ interface RecentSummary {
   created_at: string;
 }
 
-function Skeleton({ className = "" }: { className?: string }) {
-  return <div className={`shimmer rounded-lg ${className}`} />;
+function Skeleton({ className = "", circle = false }: { className?: string; circle?: boolean }) {
+  return (
+    <div
+      className={`animate-pulse bg-[var(--bg3)] ${circle ? "rounded-full" : "rounded-lg"} ${className}`}
+    />
+  );
 }
 
 function SectionHeader({
@@ -483,11 +487,12 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
               {loading
                 ? [...Array(4)].map((_, i) => (
-                    <div key={i} className="flex gap-4 rounded-xl border border-[var(--card-b)] bg-[hsl(var(--card))] p-5">
-                      <Skeleton className="h-11 w-11 shrink-0" />
-                      <div className="flex flex-1 flex-col gap-2">
-                        <Skeleton className="h-5 w-16" />
-                        <Skeleton className="h-3 w-24" />
+                    <div key={i} className="flex items-center gap-4 rounded-xl border border-[var(--card-b)] bg-[hsl(var(--card))] p-5 min-h-[92px]">
+                      <Skeleton className="h-11 w-11 shrink-0 rounded-xl" />
+                      <div className="flex flex-1 flex-col gap-2.5">
+                        <Skeleton className="h-6 w-12 rounded-md" />
+                        <Skeleton className="h-3 w-20 rounded-md" />
+                        <Skeleton className="h-2.5 w-16 rounded-md" />
                       </div>
                     </div>
                   ))
@@ -496,122 +501,194 @@ export default function Dashboard() {
                   ))}
             </div>
 
-            {/* Usage bar (free tier) - full width */}
-            {!loading && !isPro && stats && usagePercent > 0 && (
-              <div className="flex flex-wrap items-center gap-4 rounded-xl border border-[var(--card-b)] bg-[hsl(var(--card))] p-5">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                  <BarChart3 size={18} />
-                </div>
-                <div className="min-w-[180px] flex-1">
-                  <div className="mb-1.5 flex items-center justify-between">
-                    <span className="text-[11px] font-semibold text-[var(--text2)]">Monthly usage</span>
-                    <span className="text-[11px]" style={{ color: usagePercent > 85 ? "#ef4444" : "var(--text3)" }}>
-                      {stats.requests_used} / {stats.requests_limit}
+            {/* Usage bar (free tier) */}
+            {!loading && !isPro && stats && (
+              <div className="rounded-xl border border-[var(--card-b)] bg-[hsl(var(--card))] p-4 sm:p-5">
+                <div className="flex flex-col gap-4">
+                  {/* Header */}
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                        <BarChart3 size={18} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-[12px] font-semibold text-[var(--text2)]">Monthly usage</h3>
+                        <p className="text-[10px] text-[var(--text3)] mt-0.5">
+                          {stats.requests_used} of {stats.requests_limit} requests
+                        </p>
+                      </div>
+                    </div>
+                    <Link
+                      href="/pricing"
+                      className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg bg-[hsl(var(--accent))] px-3 py-1.5 text-[10px] font-semibold text-white transition-opacity hover:opacity-90 whitespace-nowrap"
+                    >
+                      Upgrade <ArrowRight size={12} />
+                    </Link>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-medium text-[var(--text3)]">Progress</span>
+                      <span className="text-[10px] font-semibold" style={{ color: usagePercent > 85 ? "#ef4444" : usagePercent > 70 ? "#f59e0b" : "hsl(var(--accent))" }}>
+                        {usagePercent}%
+                      </span>
+                    </div>
+                    <div className="relative h-2.5 overflow-hidden rounded-full bg-[var(--bg3)] dark:bg-[var(--bg2)]">
+                      <div
+                        className="h-full rounded-full transition-all duration-1000 ease-out"
+                        style={{
+                          width: `${Math.max(usagePercent, 2)}%`,
+                          background: usagePercent > 85 
+                            ? "linear-gradient(90deg, #ef4444, #f87171)" 
+                            : usagePercent > 70
+                            ? "linear-gradient(90deg, #f59e0b, #fbbf24)"
+                            : "linear-gradient(90deg, hsl(var(--accent)), hsl(var(--accent)) 80%, #10b981)",
+                          boxShadow: usagePercent > 0 ? `0 0 12px ${usagePercent > 85 ? "rgba(239, 68, 68, 0.4)" : usagePercent > 70 ? "rgba(245, 158, 11, 0.4)" : "rgba(var(--accent-rgb), 0.3)"}` : "none"
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Status message */}
+                  <div className="flex items-center justify-between text-[10px]">
+                    <span className="text-[var(--text3)]">
+                      {usagePercent >= 100
+                        ? "Limit reached. Upgrade to continue."
+                        : usagePercent > 85
+                        ? "Approaching limit. Consider upgrading."
+                        : usagePercent > 70
+                        ? `${stats.requests_limit - stats.requests_used} requests remaining`
+                        : usagePercent === 0
+                        ? `${stats.requests_limit} requests available to use`
+                        : `${stats.requests_limit - stats.requests_used} requests available`}
                     </span>
-                  </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-[var(--bg3)]">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-400 transition-all duration-1000"
-                      style={{
-                        width: `${usagePercent}%`,
-                        background: usagePercent > 85 ? "linear-gradient(90deg, #ef4444, #f87171)" : undefined
-                      }}
-                    />
+                    {usagePercent > 0 && (
+                      <span className="text-[var(--text3)]">
+                        {Math.round((stats.requests_used / stats.requests_limit) * 100)}% used
+                      </span>
+                    )}
                   </div>
                 </div>
-                <Link
-                  href="/pricing"
-                  className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-[hsl(var(--accent))] px-3.5 py-2 text-[11px] font-semibold text-white transition-opacity hover:opacity-90"
-                >
-                  Upgrade <ArrowRight size={13} />
-                </Link>
               </div>
             )}
 
-            {/* Analytics + sidebar grid — headers row aligns both columns */}
-            <div className="grid grid-cols-1 gap-6 xl:grid-cols-3 xl:gap-6">
-              <div className="hidden xl:col-span-2 xl:block">
+            {/* Usage bar loading state */}
+            {loading && !isPro && (
+              <div className="rounded-xl border border-[var(--card-b)] bg-[hsl(var(--card))] p-4 sm:p-5">
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <Skeleton className="h-10 w-10 shrink-0 rounded-lg" />
+                      <div className="min-w-0 flex-1 space-y-1.5">
+                        <Skeleton className="h-3 w-24" />
+                        <Skeleton className="h-2.5 w-32" />
+                      </div>
+                    </div>
+                    <Skeleton className="h-7 w-20 shrink-0 rounded-lg" />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Skeleton className="h-2.5 w-12" />
+                      <Skeleton className="h-2.5 w-8" />
+                    </div>
+                    <Skeleton className="h-2.5 w-full rounded-full" />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Analytics + Overview Section */}
+            <div className="space-y-6">
+              {/* Analytics */}
+              <div>
                 <SectionHeader icon={Activity}>Usage analytics</SectionHeader>
+                {loading ? (
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div className="h-[260px] rounded-xl border border-[var(--card-b)] bg-[hsl(var(--card))] p-5 animate-pulse" />
+                    <div className="h-[260px] rounded-xl border border-[var(--card-b)] bg-[hsl(var(--card))] p-5 animate-pulse" />
+                  </div>
+                ) : (
+                  <AnalyticsCharts refreshKey={refreshKey} />
+                )}
               </div>
-              <div className="hidden xl:block">
+
+              {/* Overview */}
+              <div>
                 <SectionHeader icon={Sparkles}>Overview</SectionHeader>
-              </div>
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                  {/* Recent Activity */}
+                  <PanelCard>
+                    <div className="mb-4 flex items-center gap-3">
+                      <CardIcon icon={Clock} color="#78716c" />
+                      <span className="text-[12px] font-semibold text-[var(--text2)]">Recent activity</span>
+                    </div>
+                    {loading ? (
+                      <div className="space-y-2">
+                        {[...Array(4)].map((_, i) => (
+                          <div key={i} className="flex items-center justify-between py-2 border-b border-[var(--card-b)] last:border-0">
+                            <Skeleton className="h-3 w-36" />
+                            <Skeleton className="h-3 w-12" />
+                          </div>
+                        ))}
+                      </div>
+                    ) : recentActivity.length === 0 ? (
+                      <p className="text-[11px] text-[var(--text3)] m-0">No activity yet. Start with a summary or chat.</p>
+                    ) : (
+                      <ul className="space-y-1 list-none m-0 p-0">
+                        {recentActivity.map((item) => (
+                          <li key={item.id} className="flex items-center justify-between gap-2 py-2 border-b border-[var(--card-b)] last:border-0">
+                            <span className="text-[11px] text-[var(--text2)] truncate">{activityLabel(item.type)}</span>
+                            <span className="text-[10px] text-[var(--text3)] shrink-0">{formatRelativeTime(item.created_at)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </PanelCard>
 
-              <div className="xl:col-span-2">
-                <div className="xl:hidden">
-                  <SectionHeader icon={Activity}>Usage analytics</SectionHeader>
+                  {/* Recent Summaries */}
+                  <PanelCard>
+                    <div className="mb-4 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <CardIcon icon={FileText} color="#f97316" />
+                        <span className="text-[12px] font-semibold text-[var(--text2)]">Recent summaries</span>
+                      </div>
+                      <Link href="/summarizer" className="text-[10px] font-semibold text-[hsl(var(--accent))] no-underline hover:opacity-80">
+                        View all
+                      </Link>
+                    </div>
+                    {loading ? (
+                      <div className="space-y-2">
+                        {[...Array(3)].map((_, i) => (
+                          <div key={i} className="flex flex-col gap-1.5 rounded-lg px-2 py-2">
+                            <Skeleton className="h-3 w-3/4" />
+                            <Skeleton className="h-2.5 w-1/2" />
+                          </div>
+                        ))}
+                      </div>
+                    ) : recentSummaries.length === 0 ? (
+                      <p className="text-[11px] text-[var(--text3)] m-0">No summaries yet. Paste text, a URL, or a YouTube link to get started.</p>
+                    ) : (
+                      <ul className="space-y-1 list-none m-0 p-0">
+                        {recentSummaries.map((s) => (
+                          <li key={s.id}>
+                            <Link
+                              href="/summarizer"
+                              className="flex flex-col gap-0.5 rounded-lg px-2 py-2 hover:bg-[var(--bg3)] transition-colors no-underline"
+                            >
+                              <span className="text-[11px] font-medium text-[var(--text2)] truncate">
+                                {s.source_title || "Untitled summary"}
+                              </span>
+                              <span className="text-[10px] text-[var(--text3)]">
+                                {s.summary_mode.replace(/-/g, " ")} · {formatRelativeTime(s.created_at)}
+                              </span>
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </PanelCard>
                 </div>
-                {loading
-                  ? <div className="h-[260px] rounded-xl bg-[var(--bg3)]" />
-                  : <AnalyticsCharts refreshKey={refreshKey} />
-                }
-              </div>
-
-              <div className="flex flex-col gap-4">
-                <div className="xl:hidden">
-                  <SectionHeader icon={Sparkles}>Overview</SectionHeader>
-                </div>
-
-                <PanelCard>
-                  <div className="mb-4 flex items-center gap-3">
-                    <CardIcon icon={Clock} color="#78716c" />
-                    <span className="text-[12px] font-semibold text-[var(--text2)]">Recent activity</span>
-                  </div>
-                  {loading ? (
-                    <div className="space-y-3">
-                      {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-8 w-full" />)}
-                    </div>
-                  ) : recentActivity.length === 0 ? (
-                    <p className="text-[11px] text-[var(--text3)] m-0">No activity yet. Start with a summary or chat.</p>
-                  ) : (
-                    <ul className="space-y-1 list-none m-0 p-0">
-                      {recentActivity.map((item) => (
-                        <li key={item.id} className="flex items-center justify-between gap-2 py-2 border-b border-[var(--card-b)] last:border-0">
-                          <span className="text-[11px] text-[var(--text2)] truncate">{activityLabel(item.type)}</span>
-                          <span className="text-[10px] text-[var(--text3)] shrink-0">{formatRelativeTime(item.created_at)}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </PanelCard>
-
-                {/* Recent summaries */}
-                <PanelCard>
-                  <div className="mb-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <CardIcon icon={FileText} color="#f97316" />
-                      <span className="text-[12px] font-semibold text-[var(--text2)]">Recent summaries</span>
-                    </div>
-                    <Link href="/summarizer" className="text-[10px] font-semibold text-[hsl(var(--accent))] no-underline hover:opacity-80">
-                      View all
-                    </Link>
-                  </div>
-                  {loading ? (
-                    <div className="space-y-3">
-                      {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
-                    </div>
-                  ) : recentSummaries.length === 0 ? (
-                    <p className="text-[11px] text-[var(--text3)] m-0">No summaries yet. Paste text, a URL, or a YouTube link to get started.</p>
-                  ) : (
-                    <ul className="space-y-1 list-none m-0 p-0">
-                      {recentSummaries.map((s) => (
-                        <li key={s.id}>
-                          <Link
-                            href="/summarizer"
-                            className="flex flex-col gap-0.5 rounded-lg px-2 py-2 hover:bg-[var(--bg3)] transition-colors no-underline"
-                          >
-                            <span className="text-[11px] font-medium text-[var(--text2)] truncate">
-                              {s.source_title || "Untitled summary"}
-                            </span>
-                            <span className="text-[10px] text-[var(--text3)]">
-                              {s.summary_mode.replace(/-/g, " ")} · {formatRelativeTime(s.created_at)}
-                            </span>
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </PanelCard>
               </div>
             </div>
           </div>

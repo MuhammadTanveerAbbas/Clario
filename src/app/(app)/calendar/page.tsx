@@ -137,17 +137,18 @@ function CalendarPageInner() {
     if (!user) return;
     setLoading(true);
     try {
-      const startDate = new Date(year, month, 1).toISOString();
-      const endDate = new Date(year, month + 1, 0, 23, 59, 59).toISOString();
+      const startDate = new Date(year, month, 1);
+      const endDate = new Date(year, month + 1, 0);
+      const startISO = startDate.toISOString().split('T')[0];
+      const endISO = endDate.toISOString().split('T')[0];
       const { data, error } = await supabase
         .from("calendar_events").select("id, title, content_text, platform, scheduled_at, color, status, created_at").eq("user_id", user.id)
-        .gte("scheduled_at", startDate).lte("scheduled_at", endDate)
+        .gte("scheduled_at", startISO).lte("scheduled_at", endISO)
         .order("scheduled_at", { ascending: true });
       if (error) {
         console.error('Calendar fetch error:', error);
         throw error;
       }
-      // Map the data to match CalEvent interface
       const mappedEvents: CalEvent[] = (data || []).map(event => ({
         id: event.id,
         title: event.title,
@@ -162,7 +163,7 @@ function CalendarPageInner() {
       const errorMessage = error instanceof Error ? error.message : 'Failed to load events';
       showToast(errorMessage, "error");
       console.error('Calendar error:', error);
-      setEvents([]); // Set empty array on error
+      setEvents([]);
     } finally {
       setLoading(false);
     }
@@ -242,7 +243,13 @@ function CalendarPageInner() {
   const openAddModal = (date?: Date) => {
     setEditingEvent(null);
     const scheduledDate = date || new Date();
-    setFormData({ title: "", scheduled_at: scheduledDate.toISOString().slice(0, 16), platform: "Other", content: "", color: COLORS[0], status: "Draft" });
+    const year = scheduledDate.getFullYear();
+    const month = String(scheduledDate.getMonth() + 1).padStart(2, '0');
+    const day = String(scheduledDate.getDate()).padStart(2, '0');
+    const hours = String(scheduledDate.getHours()).padStart(2, '0');
+    const minutes = String(scheduledDate.getMinutes()).padStart(2, '0');
+    const localDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+    setFormData({ title: "", scheduled_at: localDateTime, platform: "Other", content: "", color: COLORS[0], status: "Draft" });
     setModalOpen(true);
   };
 
@@ -250,17 +257,19 @@ function CalendarPageInner() {
     const daysInMonth = getDaysInMonth(year, month);
     const firstDay = getFirstDayOfMonth(year, month);
     const days = [];
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    
     for (let i = 0; i < firstDay; i++) days.push(<div key={`empty-${i}`} style={{ minHeight: 90 }} />);
     for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(year, month, day);
-      const dateStr = date.toISOString().split("T")[0];
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       const dayEvents = events.filter(e => e.scheduled_at.startsWith(dateStr));
-      const isToday = dateStr === new Date().toISOString().split("T")[0];
+      const isToday = dateStr === todayStr;
       days.push(
-        <div key={day} onClick={() => openAddModal(date)}
-          style={{ background: "hsl(var(--card))", border: "1px solid var(--card-b)", borderRadius: 8, minHeight: 90, padding: 8, cursor: "pointer", transition: "all .2s" }}
+        <div key={day} onClick={() => openAddModal(new Date(year, month, day))}
+          style={{ background: "hsl(var(--card))", border: isToday ? "2px solid hsl(var(--accent))" : "1px solid var(--card-b)", borderRadius: 8, minHeight: 90, padding: 8, cursor: "pointer", transition: "all .2s" }}
           onMouseEnter={(e) => e.currentTarget.style.borderColor = "hsl(var(--accent))"}
-          onMouseLeave={(e) => e.currentTarget.style.borderColor = "var(--card-b)"}
+          onMouseLeave={(e) => e.currentTarget.style.borderColor = isToday ? "2px solid hsl(var(--accent))" : "var(--card-b)"}
         >
           <div style={{ fontSize: ".75rem", color: isToday ? "hsl(var(--accent))" : "var(--text3)", fontWeight: isToday ? 600 : 400, marginBottom: 4 }}>{day}</div>
           {dayEvents.slice(0, 2).map(event => (
@@ -371,9 +380,31 @@ function CalendarPageInner() {
                     {MONTHS[month]} {year}
                   </h1>
                   <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <button onClick={() => setMonth(m => m === 0 ? (setYear(y => y - 1), 11) : m - 1)}
+                    <button onClick={() => {
+                      if (month === 0) {
+                        setYear(year - 1);
+                        setMonth(11);
+                      } else {
+                        setMonth(month - 1);
+                      }
+                    }}
                       style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, padding: "8px 12px", cursor: "pointer", color: "var(--text)" }}>←</button>
-                    <button onClick={() => setMonth(m => m === 11 ? (setYear(y => y + 1), 0) : m + 1)}
+                    <button onClick={() => {
+                      const today = new Date();
+                      setYear(today.getFullYear());
+                      setMonth(today.getMonth());
+                    }}
+                      style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, padding: "8px 12px", cursor: "pointer", color: "var(--text)", fontSize: ".8rem" }}>
+                      Today
+                    </button>
+                    <button onClick={() => {
+                      if (month === 11) {
+                        setYear(year + 1);
+                        setMonth(0);
+                      } else {
+                        setMonth(month + 1);
+                      }
+                    }}
                       style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, padding: "8px 12px", cursor: "pointer", color: "var(--text)" }}>→</button>
                     <button onClick={() => openAddModal()}
                       style={{ background: "hsl(var(--accent))", border: "none", borderRadius: 8, padding: "8px 16px", cursor: "pointer", color: "#fff", fontWeight: 500 }}>

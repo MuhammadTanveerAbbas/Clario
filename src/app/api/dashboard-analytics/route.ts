@@ -51,10 +51,11 @@ export async function GET() {
       });
       dailyUsage[dateKey] = (dailyUsage[dateKey] || 0) + 1;
 
-      const rawType = record.type;
-      const type = rawType === "summarize" ? "summary" : rawType;
-      if (type in featureUsage) {
-        featureUsage[type as keyof typeof featureUsage]++;
+      // Normalize type: "summarize" -> "summary"
+      const normalizedType = record.type === "summarize" ? "summary" : record.type;
+      
+      if (normalizedType in featureUsage) {
+        featureUsage[normalizedType as keyof typeof featureUsage]++;
       }
     });
 

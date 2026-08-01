@@ -12,8 +12,8 @@ export function AppAppShell({ children }: { children: React.ReactNode }) {
       <AppSidebar />
       <div
         className={cn(
-          "min-h-screen w-full transition-[padding] duration-300 ease-in-out",
-          collapsed ? "md:pl-20" : "md:pl-64",
+          "min-h-screen w-full transition-[padding] duration-[250ms] ease-[cubic-bezier(0.4,0,0.2,1)]",
+          collapsed ? "md:pl-[72px]" : "md:pl-[240px]",
         )}
       >
         {children}
