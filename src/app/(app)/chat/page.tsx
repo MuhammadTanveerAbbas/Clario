@@ -329,9 +329,10 @@ export default function ChatPage() {
         @media(max-width:768px){.topbar-hamburger{display:flex}.topbar{padding:0 12px;gap:8px}}
         .main-area{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
         .chat-layout{display:flex;flex:1;height:calc(100vh - 56px);overflow:hidden}
-        .sessions-panel{width:260px;border-right:1px solid hsl(var(--border));display:flex;flex-direction:column;flex-shrink:0;background:var(--bg2);transition:width .22s cubic-bezier(.4,0,.2,1),opacity .22s}
-        .sessions-panel[data-collapsed="true"]{width:0;opacity:0;overflow:hidden;border-right:none}
-        @media(max-width:768px){.sessions-panel{display:none}.sessions-panel.open{display:flex;position:fixed;left:0;top:56px;bottom:0;z-index:100;width:260px;background:var(--bg2);opacity:1;border-right:1px solid hsl(var(--border))}}
+         .sessions-panel{width:260px;border-right:1px solid hsl(var(--border));display:flex;flex-direction:column;flex-shrink:0;background:var(--bg2);transition:width .22s cubic-bezier(.4,0,.2,1),opacity .22s}
+         .sessions-panel[data-collapsed="true"]{width:0;opacity:0;overflow:hidden;border-right:none}
+         .sessions-overlay{display:none}
+         @media(max-width:768px){.sessions-panel{display:none}.sessions-panel.open{display:flex;position:fixed;right:0;top:0;bottom:0;z-index:101;width:300px;background:var(--bg);opacity:1;border-left:1px solid hsl(var(--border));box-shadow:-8px 0_32px_rgba(0,0,0,.15);transform:translateX(0);transition:transform .3s cubic-bezier(.16,1,.3,1)}.sessions-panel.closed{transform:translateX(100%)}.sessions-overlay{display:none}.sessions-overlay.open{display:block;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.4);backdrop-blur(2px)}.sessions-close-btn{display:flex!important}}
         .chat-area{flex:1;display:flex;flex-direction:column;min-width:0}
         .chat-header{height:56px;border-bottom:1px solid hsl(var(--border));display:flex;align-items:center;padding:0 16px;gap:10px;flex-shrink:0}
         .messages-area{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.15) transparent}
@@ -340,8 +341,8 @@ export default function ChatPage() {
         .messages-area::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:2px}
         .messages-area::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,0.25)}
         @media(max-width:480px){.messages-area{padding:12px;gap:8px}}
-        .msg-user{align-self:flex-end;background:hsl(var(--accent));color:#fff;border-radius:16px 16px 4px 16px;padding:10px 14px;max-width:85%;font-size:.88rem;line-height:1.5;white-space:pre-wrap;word-break:break-word}
-        .msg-assistant{align-self:flex-start;background:hsl(var(--card));border:1px solid var(--card-b);border-radius:4px 16px 16px 16px;padding:10px 14px;max-width:88%;font-size:.88rem;line-height:1.6;white-space:normal;word-break:break-word}
+         .msg-user{align-self:flex-end;background:hsl(var(--accent));color:#fff;border-radius:16px 16px 4px 16px;padding:10px 14px;max-width:85%;font-size:.88rem;line-height:1.5;white-space:pre-wrap;word-break:break-word}
+         .msg-assistant{align-self:flex-start;background:hsl(var(--card));border:1px solid var(--card-b);border-radius:4px 16px 16px 16px;padding:12px 16px;max-width:88%;font-size:.88rem;line-height:1.7;white-space:normal;word-break:break-word;font-family:var(--sans);-webkit-font-smoothing:antialiased;color:var(--text)}
         .input-area{border-top:1px solid hsl(var(--border));padding:16px;flex-shrink:0;background:var(--bg)}
         @media(max-width:480px){.input-area{padding:10px}}
         .input-row{display:flex;gap:10px;align-items:flex-end}
@@ -353,9 +354,14 @@ export default function ChatPage() {
         .typing-dot{width:7px;height:7px;border-radius:50%;background:var(--text3);display:inline-block;animation:pulse-dot 1.2s ease-in-out infinite}
         .starter-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
         @media(max-width:600px){.starter-grid{grid-template-columns:1fr}}
-        .starter-card{background:var(--bg3);border:1px solid hsl(var(--border));border-radius:10px;padding:14px;cursor:pointer;font-size:.82rem;color:var(--text2);transition:all .15s;text-align:left}
-        .starter-card:hover{border-color:hsl(var(--accent));color:hsl(var(--accent))}
-      `}</style>
+         .starter-card{background:var(--bg3);border:1px solid hsl(var(--border));border-radius:10px;padding:14px;cursor:pointer;font-size:.82rem;color:var(--text2);transition:all .15s;text-align:left}
+         .starter-card:hover{border-color:hsl(var(--accent));color:hsl(var(--accent))}
+         .markdown-content{font-family:var(--sans)}
+         .markdown-content h1:first-child,.markdown-content h2:first-child,.markdown-content h3:first-child{margin-top:0}
+         .markdown-content::-webkit-scrollbar{height:4px}
+         .markdown-content::-webkit-scrollbar-track{background:transparent}
+         .markdown-content::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:2px}
+       `}</style>
 
       <ToastContainer toasts={toasts} dismiss={dismissToast} />
 
@@ -428,6 +434,10 @@ export default function ChatPage() {
 
           <div className="chat-layout">
             <div
+              className={`sessions-overlay${showSessions ? " open" : ""}`}
+              onClick={() => setShowSessions(false)}
+            />
+            <div
               className={`sessions-panel${showSessions ? " open" : ""}`}
               data-collapsed={String(!showSessions)}
             >
@@ -451,25 +461,49 @@ export default function ChatPage() {
                 >
                   Conversations
                 </span>
-                <button
-                  onClick={() => {
-                    setConversationId(null);
-                    setMessages([]);
-                    setSessionTitle("New Chat");
-                  }}
-                  style={{
-                    background: "hsl(var(--accent))",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: 7,
-                    padding: "4px 10px",
-                    fontSize: ".72rem",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                  }}
-                >
-                  + New
-                </button>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <button
+                    onClick={() => {
+                      setConversationId(null);
+                      setMessages([]);
+                      setSessionTitle("New Chat");
+                    }}
+                    style={{
+                      background: "hsl(var(--accent))",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: 7,
+                      padding: "4px 10px",
+                      fontSize: ".72rem",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    + New
+                  </button>
+                  <button
+                    onClick={() => setShowSessions(false)}
+                    className="sessions-close-btn"
+                    style={{
+                      display: "none",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: 28,
+                      height: 28,
+                      borderRadius: 7,
+                      border: "1px solid hsl(var(--border))",
+                      background: "var(--bg2)",
+                      color: "var(--text3)",
+                      cursor: "pointer",
+                    }}
+                    aria-label="Close sidebar"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                </div>
               </div>
               <div
                 className="scrollable-sessions"
@@ -717,7 +751,9 @@ export default function ChatPage() {
                       animation: "fu .4s ease both",
                     }}
                   >
-                    <div style={{ fontSize: "3rem", marginBottom: 12 }}>✨</div>
+                    <div style={{ width: 48, height: 48, borderRadius: 14, background: "var(--accent-l)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--accent))" strokeWidth="1.6" strokeLinecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    </div>
                     <h2
                       style={{
                         fontFamily: "var(--serif)",
@@ -832,20 +868,21 @@ export default function ChatPage() {
                       marginBottom: 8,
                     }}
                   >
-                    <span
-                      style={{
-                        fontSize: ".74rem",
-                        background: "var(--accent-l)",
-                        color: "hsl(var(--accent))",
-                        border: "1px solid var(--accent-m)",
-                        borderRadius: 100,
-                        padding: "2px 10px",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 5,
-                      }}
-                    >
-                      🎨 {activeBrandVoice.name} active
+                      <span
+                        style={{
+                          fontSize: ".74rem",
+                          background: "var(--accent-l)",
+                          color: "hsl(var(--accent))",
+                          border: "1px solid var(--accent-m)",
+                          borderRadius: 100,
+                          padding: "2px 10px",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 5,
+                        }}
+                      >
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="10.5" r="2.5"/><circle cx="8.5" cy="7.5" r="2.5"/><circle cx="6.5" cy="12.5" r="2.5"/><path d="M12 22A10 10 0 0 1 2 12c0-3.5 2-6.5 5-8"/></svg>
+                        {activeBrandVoice.name} active
                       <button
                         onClick={deactivateVoice}
                         style={{

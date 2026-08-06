@@ -28,18 +28,6 @@ function useInView(threshold = 0.15) {
   return { ref, inView };
 }
 
-function Counter({ to, suffix = "" }: { to: number; suffix?: string }) {
-  const [val, setVal] = useState(0);
-  const { ref, inView } = useInView(0.3);
-  useEffect(() => {
-    if (!inView) return;
-    let v = 0; const step = to / 80;
-    const i = setInterval(() => { v = Math.min(v + step, to); setVal(Math.floor(v)); if (v >= to) clearInterval(i); }, 16);
-    return () => clearInterval(i);
-  }, [inView, to]);
-  return <span ref={ref}>{val.toLocaleString()}{suffix}</span>;
-}
-
 function HeroMockup() {
   const [tab, setTab] = useState(0);
   const [prog, setProg] = useState(0);
@@ -140,56 +128,6 @@ function HeroMockup() {
   );
 }
 
-function ComparisonTable() {
-  const { ref, inView } = useInView(0.1);
-  const features = [
-    { feature: "AI Text Summarizer", clario: true, jasper: true, copy: false, notion: false },
-    { feature: "10 summary modes incl. Brutal Roast", clario: true, jasper: false, copy: false, notion: false },
-    { feature: "YouTube URL → auto transcript", clario: true, jasper: false, copy: false, notion: false },
-    { feature: "Content Remix Studio (10 formats)", clario: true, jasper: true, copy: true, notion: false },
-    { feature: "Brand Voice Library", clario: true, jasper: true, copy: true, notion: false },
-    { feature: "AI Chat with creator prompts", clario: true, jasper: false, copy: false, notion: true },
-    { feature: "Free tier available", clario: true, jasper: false, copy: true, notion: true },
-    { feature: "Starting price", clario: "$0", jasper: "$49/mo", copy: "$49/mo", notion: "$10/mo" },
-  ];
-  const tools = ["Clario","Jasper","Copy.ai","Notion AI"];
-  const Check = ({ val }: { val: boolean | string }) => {
-    if (typeof val === "string") return <span style={{ fontSize: ".78rem", fontWeight: 600, color: "#f97316" }}>{val}</span>;
-    return val
-      ? <div style={{ width: 20, height: 20, borderRadius: "50%", background: "#f0fdf4", border: "1.5px solid #bbf7d0", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto" }}><span style={{ color: "#15803d", fontSize: ".6rem", fontWeight: 800 }}>✓</span></div>
-      : <div style={{ width: 20, height: 20, borderRadius: "50%", background: "#f9fafb", border: "1.5px solid #e5e7eb", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto" }}><span style={{ color: "#d1d5db", fontSize: ".65rem" }}>–</span></div>;
-  };
-  return (
-    <div ref={ref} style={{ opacity: inView ? 1 : 0, transform: inView ? "translateY(0)" : "translateY(24px)", transition: "all .6s ease", overflowX: "auto" }}>
-      <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontFamily: "var(--font-inter), system-ui, sans-serif" }}>
-        <thead>
-          <tr>
-            <th style={{ textAlign: "left", padding: "12px 16px", fontSize: ".78rem", fontWeight: 600, color: "#78716c", borderBottom: "1.5px solid #e7e5e4", width: "36%" }}>Feature</th>
-            {tools.map((t, i) => (
-              <th key={t} style={{ textAlign: "center", padding: "12px 16px", fontSize: ".82rem", fontWeight: 700, color: i === 0 ? "#f97316" : "#44403c", borderBottom: `1.5px solid ${i===0?"#f97316":"#e7e5e4"}`, background: i===0?"#fff7ed":"transparent", borderRadius: i===0?"8px 8px 0 0":"0", position: "relative" }}>
-                {i === 0 && <span style={{ position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)", background: "#f97316", color: "#fff", fontSize: ".6rem", fontWeight: 700, padding: "2px 10px", borderRadius: 100, whiteSpace: "nowrap" }}>YOU ARE HERE</span>}
-                {t}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {features.map((row, ri) => (
-            <tr key={row.feature} style={{ background: ri % 2 === 0 ? "#fafaf9" : "#fff" }}>
-              <td style={{ padding: "11px 16px", fontSize: ".82rem", color: "#44403c", borderBottom: "1px solid #f5f5f4", fontWeight: 500 }}>{row.feature}</td>
-              {[row.clario, row.jasper, row.copy, row.notion].map((v, ci) => (
-                <td key={ci} style={{ textAlign: "center", padding: "11px 16px", borderBottom: "1px solid #f5f5f4", background: ci===0?"#fffbf7":"transparent" }}>
-                  <Check val={v} />
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
 export default function LandingPage() {
   const remixFormats = [
     { icon: "𝕏", label: "Twitter Thread", preview: "🧵 I just analyzed 500 creator accounts.\n\nHere's the ONE system that separates 7-figure creators from everyone else:\n\n1/ They don't create MORE content.\n   They repurpose SMARTER.\n\n2/ One video → 10 formats → 10x the reach\n   Same effort. Exponential results." },
@@ -218,7 +156,6 @@ export default function LandingPage() {
         @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
         @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.5)}}
         @keyframes fu{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-        @keyframes mq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
         @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
         .hero{min-height:calc(100vh - 66px);padding:48px 5% 72px;display:grid;grid-template-columns:1fr 1.1fr;gap:52px;align-items:center;max-width:1160px;margin:0 auto}
         @media(max-width:860px){.hero{grid-template-columns:1fr;text-align:center;padding-top:40px;gap:36px}}
@@ -245,16 +182,7 @@ export default function LandingPage() {
         .soc-t{font-size:.76rem;color:var(--g5)}
         .soc-t strong{color:var(--bk);font-weight:600}
         .stars-sm{color:var(--o);font-size:.65rem;letter-spacing:1px}
-        .mq-w{overflow:hidden;padding:14px 0;border-top:1px solid var(--g2);border-bottom:1px solid var(--g2)}
-        .mq-t{display:flex;animation:mq 28s linear infinite;white-space:nowrap}
-        .mq-i{display:inline-flex;align-items:center;gap:9px;padding:0 24px;font-size:.72rem;font-weight:500;color:var(--g4);letter-spacing:.05em}
-        .mq-d{width:4px;height:4px;border-radius:50%;background:var(--om);flex-shrink:0}
-        .stats-g{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:var(--g2);border-radius:16px;overflow:hidden;max-width:860px;margin:0 auto}
-        @media(max-width:560px){.stats-g{grid-template-columns:repeat(2,1fr)}}
-        .stat-c{background:var(--w);padding:26px 20px;text-align:center}
-        .stat-n{font-family:var(--serif);font-size:2.2rem;font-weight:300;letter-spacing:-.04em;line-height:1;color:var(--bk);margin-bottom:5px}
-        .stat-n em{font-style:normal;color:var(--o)}
-        .stat-l{font-size:.72rem;color:var(--g4);font-weight:400}
+
         .b-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}
         @media(max-width:860px){.b-grid>*{grid-column:span 12!important}}
         .b-card{background:var(--w);border-radius:18px;border:1px solid var(--g2);overflow:hidden;transition:transform .25s,box-shadow .25s}
@@ -266,7 +194,7 @@ export default function LandingPage() {
         .b-desc{font-size:.82rem;color:var(--g5);line-height:1.7}
         .demo-box{border-radius:18px;border:1px solid var(--g2);background:var(--w);overflow:hidden;box-shadow:0 6px 36px rgba(0,0,0,.05);display:grid;grid-template-columns:280px 1fr}
         @media(max-width:760px){.demo-box{grid-template-columns:1fr}}
-        .comp-wrap{overflow-x:auto;border-radius:18px;border:1px solid var(--g2);box-shadow:0 6px 24px rgba(0,0,0,.05)}
+
         .p-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;max-width:680px;margin:0 auto}
         @media(max-width:520px){.p-grid{grid-template-columns:1fr}}
         .p-card{border-radius:18px;padding:30px;border:1.5px solid var(--g2);background:var(--w);position:relative;transition:transform .25s,box-shadow .25s}
@@ -327,27 +255,6 @@ export default function LandingPage() {
           <div style={{ display: "flex", justifyContent: "center", animation: "fu .9s .3s ease both" }}>
             <div style={{ animation: "float 5s ease-in-out infinite", width: "100%" }}><HeroMockup /></div>
           </div>
-        </div>
-      </section>
-
-      <div className="mq-w">
-        <div className="mq-t">
-          {[...Array(2)].map((_, ri) =>
-            ["Text Summarizer","Content Remix Studio","Brand Voice Library","AI Chat","YouTube → Summary","10 Summary Modes","Twitter Threads","LinkedIn Posts","Email Newsletters","Podcast Notes","Blog Outlines"].map((item, i) => (
-              <span key={`${ri}-${i}`} className="mq-i"><span className="mq-d" />{item}</span>
-            ))
-          )}
-        </div>
-      </div>
-
-      <section style={{ padding: "64px 5%" }}>
-        <div className="stats-g">
-          {[{n:10,s:"",l:"Summary modes"},{n:10,s:"",l:"Remix formats"},{n:100,s:"",l:"Free requests/month"},{n:4,s:"hrs",l:"Saved per week"}].map(s => (
-            <div key={s.l} className="stat-c">
-              <div className="stat-n"><Counter to={s.n} suffix={s.s} /></div>
-              <div className="stat-l">{s.l}</div>
-            </div>
-          ))}
         </div>
       </section>
 
@@ -489,17 +396,6 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      <section className="sec" id="compare">
-        <div className="sec-w">
-          <div className="sec-h">
-            <div className="s-tag">Why Clario</div>
-            <h2 className="s-title">How we stack up <em>against the rest.</em></h2>
-            <p className="s-sub">Every tool in one place  purpose-built for creators.</p>
-          </div>
-          <div className="comp-wrap"><ComparisonTable /></div>
         </div>
       </section>
 

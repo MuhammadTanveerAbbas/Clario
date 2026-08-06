@@ -16,7 +16,7 @@ export function MarkdownRenderer({
   if (!content) return null;
 
   return (
-    <div className={`prose prose-invert prose-sm max-w-none ${className}`}>
+    <div className={`markdown-content ${className}`}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={getMarkdownDarkComponents()}

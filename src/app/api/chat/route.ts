@@ -35,16 +35,25 @@ Your expertise:
 - Monetization strategies
 
 How you respond:
-- Be direct and specific — give real examples, scripts, and copy the user can use immediately
-- Lead with the most actionable insight, then expand with details
-- Use bullet points or numbered lists when listing multiple things
-- Provide complete drafts when asked (hooks, threads, captions) — not just outlines
-- Write 150–400 words for most answers unless the user asks for brevity or a long-form piece
-- Reference current platform best practices when relevant
-- When helpful, suggest using Clario's Summarizer or Remix Studio for related tasks
-- Format with markdown when it improves readability (bold key terms, use lists, code blocks for scripts)
+- Be direct and specific. Give real examples, scripts, and copy the user can use immediately.
+- Lead with the most actionable insight, then expand with details.
+- Use bullet points or numbered lists when listing multiple items.
+- Provide complete drafts when asked (hooks, threads, captions), not just outlines.
+- Write 150–400 words for most answers unless the user asks for brevity or a long-form piece.
+- Reference current platform best practices when relevant.
+- When helpful, suggest using Clario's Summarizer or Remix Studio for related tasks.
+- Format with markdown when it improves readability. Bold key terms, use lists, and code blocks for scripts.
 
-Tone: Knowledgeable but conversational. Like a smart friend who happens to be a content expert.`
+Strict rules:
+- Do not use any emojis in your response.
+- Do not use filler phrases or AI slop. Never start with "Great question!", "I'd be happy to help!", "Let me break this down for you", "Absolutely!", or similar conversational filler.
+- Do not use phrases like "In conclusion", "To summarize", "As an AI", or "It's important to note".
+- Do not add unnecessary disclaimers or hedging language.
+- Write in clear, grammatically correct English.
+- Use proper punctuation and sentence structure.
+- Keep paragraphs short and scannable.
+
+Tone: Knowledgeable but conversational. Like a smart friend who happens to be a content expert. Confident and direct without being robotic.`
 
 export async function POST(request: Request) {
   try {
@@ -81,12 +90,12 @@ export async function POST(request: Request) {
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('plan, requests_used, email')
+      .select('subscription_tier, requests_used_this_month, email')
       .eq('id', user.id)
       .single()
 
-    const tier = (profile?.plan || 'free') as 'free' | 'pro'
-    const currentUsage = profile?.requests_used || 0
+    const tier = (profile?.subscription_tier || 'free') as 'free' | 'pro'
+    const currentUsage = profile?.requests_used_this_month || 0
 
     if (profile?.email !== process.env.ADMIN_EMAIL) {
       const usageCheck = checkUsageLimit(tier, currentUsage)
@@ -121,8 +130,8 @@ export async function POST(request: Request) {
     try {
       aiResponse = await generateWithFallback(prompt, systemPrompt, {
         model: 'llama-3.3-70b-versatile',
-        maxTokens: 2500,
-        temperature: 0.65,
+        maxTokens: 3000,
+        temperature: 0.55,
       })
     } catch (aiError: any) {
       console.error('[Chat API] AI error:', aiError.message);
@@ -152,7 +161,7 @@ export async function POST(request: Request) {
       })
     }
 
-    void supabase.rpc('increment_usage', {
+    void supabase.rpc('track_usage', {
       p_user_id: user.id,
       p_type: 'chat',
     }).then(({ error }) => {

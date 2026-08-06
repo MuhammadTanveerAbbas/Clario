@@ -67,9 +67,10 @@ export async function generateWithFallback(
   const totalTokens = estimateTokens(systemPrompt + prompt)
   const modelLimits: Record<string, number> = {
     'openai/gpt-oss-120b': 6000,
-    'llama-3.3-70b-versatile': 30000,
-    'llama-3.1-70b-versatile': 30000,
-    'mixtral-8x7b-32768': 30000,
+    'llama-3.3-70b-versatile': 32000,
+    'llama-3.1-70b-versatile': 32000,
+    'llama-3.1-8b-instant': 8000,
+    'mixtral-8x7b-32768': 32000,
   }
 
   const modelLimit = modelLimits[model] || 30000
@@ -118,7 +119,9 @@ async function generateSingleCompletion(
       ],
       max_tokens: maxTokens,
       temperature,
-      top_p: 0.95,
+      top_p: 0.9,
+      frequency_penalty: 0.1,
+      presence_penalty: 0.1,
     })
 
     const content = response.choices[0]?.message?.content?.trim() || ''
