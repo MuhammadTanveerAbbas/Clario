@@ -110,4 +110,9 @@ export default {
     },
   },
   plugins: [require('tailwindcss-animate')],
+  safelist: [
+    'duration-[250ms]',
+    'ease-[cubic-bezier(0.16,1,0.3,1)]',
+    'ease-[cubic-bezier(0.4,0,0.2,1)]',
+  ],
 } satisfies Config;

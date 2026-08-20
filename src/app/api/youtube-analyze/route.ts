@@ -9,7 +9,7 @@ import { createClient } from '@/lib/supabase/server';
 import { checkRateLimit } from '@/middleware/rate-limit';
 import { extractVideoId, analyzeVideo } from '@/lib/youtube-engine';
 import { sanitizeHtml, sanitizePlainText, sanitizeYoutubeUrl } from '@/lib/sanitize';
-import Groq from 'groq-sdk';
+import { generateCompletion } from '@/lib/ai-fallback';
 
 export const maxDuration = 90;
 export const dynamic = 'force-dynamic';
@@ -44,28 +44,17 @@ async function summarizeWithGroq(
   transcript: string,
   title: string
 ): Promise<Record<string, unknown>> {
-  const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-
   const MAX_CHARS = 24_000;
   const truncated =
     transcript.length > MAX_CHARS
       ? transcript.slice(0, MAX_CHARS) + '\n[Truncated for length]'
       : transcript;
 
-  const resp = await groq.chat.completions.create({
-    model: 'llama-3.3-70b-versatile',
-    max_tokens: 3000,
-    temperature: 0.3,
-    messages: [
-      { role: 'system', content: SUMMARIZE_SYSTEM },
-      {
-        role: 'user',
-        content: `Video title: ${title}\n\nTranscript:\n${truncated}`,
-      },
-    ],
-  });
-
-  const raw = resp.choices[0]?.message?.content?.trim() ?? '';
+  const raw = await generateCompletion(
+    `Video title: ${title}\n\nTranscript:\n${truncated}`,
+    SUMMARIZE_SYSTEM,
+    { model: 'llama-3.3-70b-versatile', maxTokens: 3000, temperature: 0.3 }
+  );
   const cleaned = raw.replace(/^```json\s*|^```\s*|```$/gm, '').trim();
   return JSON.parse(cleaned) as Record<string, unknown>;
 }

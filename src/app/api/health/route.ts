@@ -1,5 +1,5 @@
-import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,14 +13,16 @@ export async function GET() {
     checks: {} as Record<string, { status: string; latency?: number; error?: string }>,
   }
 
-  // Check Supabase connectivity
+  // Check Supabase connectivity with a lightweight read-only request.
+  // Uses the server-side service-role client (bypasses RLS) so the check is
+  // accurate and never exposes private data. The key never leaves the server.
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-  if (supabaseUrl && supabaseAnonKey) {
+  if (supabaseUrl && serviceRoleKey) {
     const dbStart = Date.now()
     try {
-      const supabase = createClient(supabaseUrl, supabaseAnonKey)
+      const supabase = createAdminClient()
       const { error } = await supabase.from('profiles').select('id').limit(1).maybeSingle()
       results.checks.database = {
         status: error ? 'error' : 'ok',

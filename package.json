@@ -10,7 +10,8 @@
     "start": "NODE_NO_WARNINGS=1 next start",
     "lint": "tsc --noEmit && eslint .",
     "lint:fix": "eslint . --fix",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node --test \"tests/**/*.test.mjs\""
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.3",
